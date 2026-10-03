@@ -1554,6 +1554,94 @@ document.addEventListener('DOMContentLoaded',function(){setupAllMoneyInputs();co
 bootstrapDB();
 prewarmBridge();
 setSyncIndicator('off');
+<script>
+/* ===== PATCH v20 JAGI Y ZOE — NO BORRAR ===== */
+var _p20={sseFails:0,reagNuevo:false,asignTs:0,asignSig:null};
+(function(){
+// ---------- apiGet: 2 intentos fetch antes del iframe (menos 404) ----------
+window.apiGet=async function(params,timeoutMs){var ms=timeoutMs||12000;for(var i=0;i<2;i++){var ctrl=('AbortController'in window)?new AbortController():null;var to=ctrl?setTimeout(function(){ctrl.abort();},ms):null;try{var res=await fetch(API_URL+'?'+new URLSearchParams(params).toString(),{method:'GET',redirect:'follow',cache:'no-store',signal:ctrl?ctrl.signal:undefined});if(to)clearTimeout(to);if(!res.ok)throw new Error('HTTP '+res.status);return await res.json();}catch(e){if(to)clearTimeout(to);if(i===0)continue;return await frameGet(params,ms);}}return await frameGet(params,ms);};
+// ---------- Guards anti-crash (currentUser null) ----------
+window.startSyncLoop=function(){if(_syncLoopId)clearInterval(_syncLoopId);flushQueue();_syncLoopId=setInterval(function(){if(!currentUser)return;(async function(){await flushQueue();if(!currentUser)return;if(getPendingQueue().length>0){if(currentUser.role==='delivery')renderDeliveryApp();return;}if(!_pullInProgress){pullState({after:function(){if(!currentUser)return;if(currentUser.role==='delivery'){renderDeliveryApp();updateFicheStatus();}else{var a=document.querySelector('.page:not(.hidden)');var pid=a?a.id.replace('page-',''):'';if(pid)showPage(pid);}}});}})();},SYNC_INTERVAL);};
+window.checkSavedSession=function(){var s=loadSession();if(s&&s.user){currentUser=s.user;document.getElementById('loginScreen').style.display='none';if(currentUser.role==='delivery'){document.getElementById('deliveryApp').classList.add('active');updateLiveUI(null,null);updateFicheStatus();renderDeliveryApp();maybeAutoStartLive();}else{document.getElementById('appContainer').classList.add('active');setupApp();}suscribirSyncInstantaneo();setSyncIndicator('ok');showToast('Sesión restaurada. Bienvenido, '+currentUser.name,'success');if(s.state){try{stateFromAPI(s.state);reapplyPendingOps();_lastOrdersSig=ordersSignature(_db);renderAllActive();}catch(e){}}startSyncLoop();setTimeout(function(){pullState({after:function(){if(!currentUser)return;renderAllActive();if(currentUser.role==='delivery')renderDeliveryApp();}});},500);return true;}return false;};
+window.syncInstantaneoPull=function(){(async function(){await flushQueue();if(getPendingQueue().length>0){if(currentUser&&currentUser.role==='delivery')renderDeliveryApp();return;}pullState({after:function(){if(!currentUser)return;renderAllActive();if(currentUser.role==='delivery'){renderDeliveryApp();updateFicheStatus();}}});})();};
+window.refreshDeliveryNow=function(){showToast('🔄 Consultando planilla…','info');(async function(){await flushQueue();if(getPendingQueue().length>0){renderDeliveryApp();showToast('⏳ Hay cambios aún sincronizándose','info');return;}pullState({after:function(){if(!currentUser)return;renderDeliveryApp();updateFicheStatus();showToast('✅ Lista actualizada','success');},onError:function(e){showToast('❌ Sin conexión: '+e.message,'error');}});})();};
+// ---------- SSE con backoff (adiós error 429) ----------
+window.suscribirSyncInstantaneo=function(){if(_ntfyES){try{_ntfyES.close();}catch(e){}_ntfyES=null;}if(_p20.sseFails>=3)return;try{_ntfyES=new EventSource('https://ntfy.sh/'+SYNC_TOPIC+'/sse');_ntfyES.onopen=function(){_p20.sseFails=0;};_ntfyES.onmessage=function(ev){var m=null;try{m=JSON.parse(ev.data);}catch(e){return;}if(!m||m.by===(currentUser?currentUser.id:''))return;if(_ntfyDebounce)clearTimeout(_ntfyDebounce);_ntfyDebounce=setTimeout(function(){_ntfyDebounce=null;syncInstantaneoPull();},250);};_ntfyES.onerror=function(){try{_ntfyES.close();}catch(e){}_ntfyES=null;_p20.sseFails++;if(_p20.sseFails<3&&currentUser)setTimeout(function(){suscribirSyncInstantaneo();},60000);};}catch(e){_ntfyES=null;}};
+// ---------- LOGIN ROBUSTO (solución definitiva) ----------
+window.doLogin=async function(){setLoginError('');var btn=document.getElementById('loginBtn');var pass=document.getElementById('loginPass').value;var emailInput=document.getElementById('loginEmail');var email=emailInput?normEmail(emailInput.value):'';if(!email){setLoginError('Ingresá tu email');return;}if(!pass){setLoginError('Ingresá tu contraseña');return;}if(btn){btn.disabled=true;btn.textContent='Conectando…';}
+try{
+var data=null;
+for(var i=1;i<=3&&!data;i++){try{data=await apiGet({action:'login',email:email,password:pass},15000);}catch(e){console.warn('login intento '+i,e.message);if(i<3)await new Promise(function(r){setTimeout(r,900*i);});}}
+if(!data||!data.ok){setLoginError((data&&data.error)||'Contraseña incorrecta o usuario inexistente (hoja Usuarios).');return;}
+var st=data.state||data.data||data.estado||null;
+if(st&&(st.Usuarios||st.users)){stateFromAPI(st);}
+else{try{var s2=await apiGet({action:'state'},15000);if(s2&&s2.ok&&s2.data)stateFromAPI(s2.data);}catch(e){console.warn('state post-login falló',e.message);}}
+reapplyPendingOps();
+var db=getDB();var sess=data.session||{};var meId=normEmail(sess.email||email);
+var me=db.users.find(function(u){return u.id===meId||normEmail(u.email||u.id||'')===meId;});
+if(!me&&sess.role){me={id:meId,email:sess.email||email,name:sess.name||sess.email||email,role:mapearRolSheets(sess.role),estado:'Activo',telefono:'',cedula:'',fechaIngreso:'',sueldoMensual:0,jornal:0};db.users.push(me);saveDB(db);}
+if(!me){setLoginError('Tu email no coincide con la columna A de la hoja Usuarios. Usá el email exacto (ej: juan@zoe.com).');return;}
+currentUser=me;_lastOrdersSig=ordersSignature(db);saveSession(me,st||{});
+document.getElementById('loginScreen').style.display='none';
+if(currentUser.role==='delivery'){document.getElementById('deliveryApp').classList.add('active');updateLiveUI(null,null);updateFicheStatus();renderDeliveryApp();maybeAutoStartLive();}
+else{document.getElementById('appContainer').classList.add('active');setupApp();}
+suscribirSyncInstantaneo();showToast('Bienvenido, '+currentUser.name,'success');setSyncIndicator('ok');startSyncLoop();
+setTimeout(function(){pullState({after:function(){if(!currentUser)return;renderAllActive();if(currentUser.role==='delivery')renderDeliveryApp();}});},800);
+}catch(err){console.error(err);setLoginError('Error de conexión tras 3 intentos: '+(err&&err.message?err.message:String(err))+'. Verificá internet y que el Web App esté desplegado como "Cualquier persona".');}
+finally{if(btn){btn.disabled=false;btn.textContent='Iniciar Sesión';}}};
+// ---------- ASIGNAR FIX: notificado desaparece + reagendados ocultos hasta su fecha + botón REAGENDAR + throttle ----------
+window.renderAsignacion=function(force){
+var db=getDB(),today=new Date().toISOString().split('T')[0];
+var sig=ordersSignature(db);
+if(!force&&sig===_p20.asignSig&&(Date.now()-_p20.asignTs)<3000)return;
+_p20.asignSig=sig;_p20.asignTs=Date.now();
+var flipped=false;
+db.pedidos.forEach(function(p){if(p.estado==='Reagendado'&&p.fechaReagendado&&p.fechaReagendado<=today){p.estado='Pendiente';p.fechaReagendadoNotificada=true;flipped=true;saveDB(db);opUpsert('Pedidos',p.id,p);}});
+if(flipped){_p20.asignSig=ordersSignature(db);}
+var fEl=document.getElementById('asignFilterTienda');var filterTienda=fEl?fEl.value:'';
+var pedidos=db.pedidos.filter(function(p){
+if(p.estado==='Cancelado')return false;
+if(p.estado==='Entregado')return p.notificadoTienda!==true;
+if(p.estado==='Reagendado')return !p.fechaReagendado;
+return p.fecha===today;
+});
+if(currentUser&&currentUser.role==='ruteador'){pedidos=pedidos.filter(function(p){return !p.ruteadorId||p.ruteadorId===currentUser.id;});}
+if(filterTienda)pedidos=pedidos.filter(function(p){return p.tiendaId===filterTienda;});
+var grupos={};pedidos.forEach(function(p){if(!grupos[p.tiendaId])grupos[p.tiendaId]={tienda:p.tienda,telefonoTienda:p.telefonoTienda,ciudad:p.ciudadOrigen,pedidos:[]};grupos[p.tiendaId].pedidos.push(p);});
+var container=document.getElementById('asignacionContainer');
+if(Object.keys(grupos).length===0){container.innerHTML='<div class="empty-state"><div class="empty-icon">📭</div><p>No hay pedidos para asignar hoy</p></div>';return;}
+var html='';
+Object.entries(grupos).forEach(function(entry){var grupo=entry[1];
+var ver=grupo.pedidos.filter(function(p){return p.verificado;}).length,asi=grupo.pedidos.filter(function(p){return p.deliveryId;}).length,rec=grupo.pedidos.filter(function(p){return p.estado==='Recogido';}).length,ent=grupo.pedidos.filter(function(p){return p.estado==='Entregado';}).length,rea=grupo.pedidos.filter(function(p){return p.estado==='Reagendado';}).length,tot=grupo.pedidos.length;
+html+='<div class="asignacion-group"><div class="asignacion-group-header"><h4>🏪 '+grupo.tienda+' <small style="opacity:.8">('+grupo.ciudad+')</small></h4><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="badge badge-checked">'+ver+' ✓</span><span class="badge badge-delivered">'+asi+'/'+tot+' Asignados</span>'+(rec>0?'<span class="badge badge-pickedup">📦 '+rec+' Retirados</span>':'')+(ent>0?'<span class="badge badge-pago-ok">✅ '+ent+' Entregados</span>':'')+(rea>0?'<span class="badge badge-rescheduled">📅 '+rea+' Reagendados</span>':'')+'<a href="'+buildWhatsAppUrl(grupo.telefonoTienda)+'" target="_blank" rel="noopener" class="btn btn-whatsapp btn-xs">💬 WhatsApp</a></div></div>';
+html+=grupo.pedidos.map(function(p){
+var necesitaCheck=!p.verificado,estaRecogido=p.estado==='Recogido',estaEntregado=p.estado==='Entregado',esReagendado=p.estado==='Reagendado';
+var urlRetiro=getMapsUrlRetiro(p),urlEntrega=getMapsUrlEntrega(p);
+var btnNotificar=(estaEntregado&&!p.notificadoTienda)?'<button class="btn btn-whatsapp btn-sm" onclick="notificarEntregaATienda(\''+p.id+'\')" style="background:#25D366;color:white;border:none">💬 Avisar a Tienda</button>':'';
+var btnCompartir='<button class="btn btn-xs btn-outline" onclick="abrirModalCompartirRuteador(\''+p.id+'\')">📤 Compartir</button>';
+var btnCancelar='<button class="btn btn-xs btn-danger" onclick="cancelarPedidoAsignacion(\''+p.id+'\')">❌ Cancelar</button>';
+var btnReagendar=(!estaEntregado&&!esReagendado)?'<button class="btn btn-xs btn-warning" onclick="abrirModalReagendar(\''+p.id+'\')">📅 Reagendar</button>':'';
+var btnDefinir=esReagendado?'<button class="btn btn-warning btn-sm" onclick="abrirModalFechaReagendado(\''+p.id+'\')" style="background:#ff9800;color:white;border:none">📅 Definir Fecha Reentrega</button>':'';
+var btnOficina=estaRecogido?'<button class="btn btn-danger btn-sm" onclick="devolverAOficina(\''+p.id+'\')" style="background:#E17055;color:white;border:none">🏢 Devolver a Oficina</button>':'';
+var bRea=esReagendado?'<span class="badge badge-rescheduled">📅 REAGENDADO</span>':'';
+var bRec=estaRecogido?'<span class="badge badge-pickedup">📦 RETIRADO (sin entregar)</span>':'';
+var capRea=esReagendado&&p.capturaReagendado?'<div style="margin-top:6px"><a href="'+p.capturaReagendado+'" target="_blank" rel="noopener" class="btn btn-xs btn-secondary">📎 Ver captura del cliente</a></div>':'';
+var infoRea=esReagendado&&p.fechaReagendado?'<div style="font-size:.82rem;color:#ff9800;margin-top:4px;font-weight:600">📅 Reentrega programada: '+p.fechaReagendado+(p.ventana?' · '+p.ventana:'')+' (aparecerá en Asignar ese día)</div>':'';
+var motRea=esReagendado&&p.motivo?'<div style="font-size:.82rem;color:#ff9800;margin-top:4px;font-weight:600">📝 Motivo: '+safeText(p.motivo)+'</div>':'';
+var infoRec=estaRecogido&&p.horaRetiro?'<div style="font-size:.82rem;color:#ff9800;margin-top:4px;font-weight:600">⏱️ Retirado a las '+p.horaRetiro+' — ⚠️ NO ENTREGADO AÚN</div>':'';
+var infoEnt=estaEntregado&&p.horaEntrega?'<div style="font-size:.82rem;color:#00B894;margin-top:4px;font-weight:600">✅ Entregado a las '+p.horaEntrega+' · Cobrado: '+formatGs(p.montoCobrado||0)+'</div>':'';
+return '<div class="asignacion-item" style="'+(esReagendado?'background:#fff3cd;border-left:4px solid #ff9800':'')+(estaRecogido?';background:#fff3cd;border-left:4px solid #ff9800':'')+(estaEntregado?';background:#e8f5e9;border-left:4px solid #00B894':'')+'"><div class="asignacion-item-info"><div class="ai-id">'+p.id+' '+badgeEstado(p.estado)+' '+bRea+bRec+(p.verificado?'<span class="badge badge-checked">✓ Verificado</span>':'<span class="badge badge-unassigned">⚠️ Sin verificar</span>')+(estaEntregado?'<span class="badge badge-pago-ok">✅ ENTREGADO</span>':'')+'</div><div class="ai-cliente">👤 '+p.cliente+'</div><div class="ai-destino">📍 '+p.ciudad+' - '+safeText(p.dirEntrega)+' | 💰 '+formatGs(p.monto)+(p.ventana?' | ⏰ '+p.ventana:'')+'</div><div style="font-size:.78rem;margin-top:4px;display:flex;gap:12px;flex-wrap:wrap"><span>🏪 Retiro: '+(urlRetiro?'<a href="'+urlRetiro+'" target="_blank" rel="noopener" class="link-maps">✅ Link OK</a>':'<span class="maps-badge-no">❌ Sin link</span>')+'</span><span>📦 Entrega: '+(urlEntrega?'<a href="'+urlEntrega+'" target="_blank" rel="noopener" class="link-maps">✅ Link OK</a>':'<span class="maps-badge-no">❌ Sin link</span>')+'</span></div>'+(p.delivery?'<div style="font-size:.82rem;color:var(--success);margin-top:4px">✅ Asignado a: <strong>'+p.delivery+'</strong></div>':'<div style="font-size:.82rem;color:var(--warning);margin-top:4px">⏳ Sin asignar</div>')+motRea+infoRea+infoRec+infoEnt+capRea+'</div><div class="asignacion-item-actions">'+btnDefinir+btnNotificar+btnOficina+btnCompartir+btnCancelar+btnReagendar+'<button class="btn btn-edit btn-sm" onclick="openEditarPedido(\''+p.id+'\')">✏️ Editar</button>'+(necesitaCheck?'<button class="btn btn-check btn-sm" onclick="checkPedido(\''+p.id+'\')">✓ Check</button>':'<span style="color:var(--success);font-weight:600">✓</span>')+(estaRecogido?'<button class="btn btn-sm" onclick="confirmarRuta(\''+p.id+'\')" style="background:#ff9800;color:white;border:none">🚚 Confirmar Ruta</button>':'')+'<button class="btn '+(p.delivery?'btn-secondary':'btn-primary')+' btn-sm" onclick="openAsignarModal(\''+p.id+'\')">'+(p.delivery?'🔄 Reasignar':'🎯 Asignar')+'</button></div></div>';
+}).join('')+'</div>';});
+container.innerHTML=html;};
+// ---------- REAGENDAR (nuevo) ----------
+window.abrirModalReagendar=function(pedidoId){var db=getDB();var p=db.pedidos.find(function(x){return x.id===pedidoId;});if(!p)return;_p20.reagNuevo=true;document.getElementById('frPedidoId').value=pedidoId;document.getElementById('frInfo').innerHTML='<strong>Pedido:</strong> '+p.id+'<br><strong>Cliente:</strong> '+safeText(p.cliente)+'<br><strong>Tienda:</strong> '+safeText(p.tienda)+'<br>Elegí la fecha: el pedido queda <strong>OCULTO</strong> y vuelve a Asignar ese día.';document.getElementById('frFecha').value=p.fechaReagendado||'';document.getElementById('frHorario').value=p.ventana||'';document.getElementById('frObs').value='';var cap=document.getElementById('frCapturaBox');if(cap)cap.innerHTML='<em style="color:var(--gray-500)">Sin captura adjunta</em>';openModal('modalFechaReagendado');};
+var _origFR=window.abrirModalFechaReagendado;
+window.abrirModalFechaReagendado=function(id){_p20.reagNuevo=false;if(_origFR)_origFR(id);};
+window.guardarFechaReagendado=function(){var db=getDB();var pedidoId=document.getElementById('frPedidoId').value;var p=db.pedidos.find(function(x){return x.id===pedidoId;});if(!p)return;var fecha=document.getElementById('frFecha').value;if(!fecha){showToast('Seleccioná una fecha','error');return;}var horario=document.getElementById('frHorario').value.trim();var obs=document.getElementById('frObs').value.trim();p.fechaReagendado=fecha;if(horario)p.ventana=horario;if(_p20.reagNuevo){p.estado='Reagendado';p.reagendadoPor=currentUser?currentUser.name:'';if(!p.motivo)p.motivo=obs||('Reagendado por '+(currentUser?currentUser.name:''));}else if(obs){p.obs=(p.obs?p.obs+' | ':'')+obs;}p.fechaReagendadoDefinidaPor=currentUser?currentUser.name:'';p.fechaReagendadoDefinidaTs=Date.now();saveDB(db);opUpsert('Pedidos',p.id,p);_lastOrdersSig=ordersSignature(db);registrarLog('pedido_reagendado',p.id,{fecha:fecha});closeModal('modalFechaReagendado');showToast('📅 Pedido '+p.id+' reagendado para el '+fecha+'. Vuelve a Asignar ese día.','success');_p20.asignSig=null;renderAsignacion(true);publicarBeacon();};
+// ---------- NOTIFICAR: desaparición garantizada ----------
+var _origNotif=window.notificarEntregaATienda;
+window.notificarEntregaATienda=function(id){var db=getDB();var p=db.pedidos.find(function(x){return x.id===id;});if(!p)return;if(_origNotif)_origNotif(id);p.notificadoTienda=true;p.notificadoTiendaTs=Date.now();saveDB(db);opUpsert('Pedidos',p.id,p);_lastOrdersSig=ordersSignature(db);_p20.asignSig=null;renderAsignacion(true);publicarBeacon();};
+})();
 </script>
 </body>
 </html>
