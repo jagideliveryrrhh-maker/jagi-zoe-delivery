@@ -1618,7 +1618,7 @@ setInterval(function(){if(!currentUser)prewarmBridge();},60000);
 });
 bootstrapDB();
 prewarmBridge();
-setSyncIndicator('off');/* ========== ZOE v2 · BLOQUE ÚNICO (pegar al FINAL, antes de </script>) ========== */
+setSyncIndicator('off');/* ========== ZOE v2 · BLOQUE ÚNICO (pegar al FINAL, antes del cierre de script) ========== */
 function hoyLocal(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function waLink(tel,msg){return 'https://wa.me/'+phoneToWa(tel)+'?text='+encodeURIComponent(msg||'');}
 
