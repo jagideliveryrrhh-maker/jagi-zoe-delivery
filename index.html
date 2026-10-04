@@ -1165,8 +1165,9 @@ msFilterDelivery:{selected:new Set(),placeholder:'Todos',options:[],onChange:fun
 };
 const SESSION_KEY='jagi_zoe_session';
 const SESSION_DURATION=30*24*60*60*1000;
-function saveSession(user,state){const session={user:user,state:state,expires:Date.now()+SESSION_DURATION};try{localStorage.setItem(SESSION_KEY,JSON.stringify(session));}catch(e){}}
-function loadSession(){try{const session=JSON.parse(localStorage.getItem(SESSION_KEY));if(!session)return null;if(Date.now()>session.expires){localStorage.removeItem(SESSION_KEY);return null;}return session;}catch(e){return null;}}
+function saveSession(user,state){const base={user:user,expires:Date.now()+SESSION_DURATION,lastActive:Date.now()};try{localStorage.setItem(SESSION_KEY,JSON.stringify(base));return;}catch(e){}try{const slim={user:{id:user.id,email:user.email||user.id,name:user.name,role:user.role},expires:base.expires,lastActive:base.lastActive};localStorage.setItem(SESSION_KEY,JSON.stringify(slim));}catch(e2){console.warn('No se pudo guardar la sesión:',e2);}}
+function loadSession(){try{const session=JSON.parse(localStorage.getItem(SESSION_KEY));if(!session)return null;const last=session.lastActive?session.lastActive:(session.expires-SESSION_DURATION);if(Date.now()-last>SESSION_DURATION){localStorage.removeItem(SESSION_KEY);return null;}return session;}catch(e){return null;}}
+function touchSession(){try{let s=JSON.parse(localStorage.getItem(SESSION_KEY));if(!s)return;s.lastActive=Date.now();s.expires=Date.now()+SESSION_DURATION;localStorage.setItem(SESSION_KEY,JSON.stringify(s));}catch(e){}}
 function clearSession(){localStorage.removeItem(SESSION_KEY);}
 let currentUser=null,lastSavedTiendaId=null,lastSavedMetodo=null,lastSavedDeliveryId=null,currentAsignarPedidoId=null;
 let _lastOrdersSig='',_lastNotifCount=-1,_rendSeleccion=new Set(),_rendVisibles=[],_asistDetUserId='',_asistDetFecha='',_rendTiendasMap={};
@@ -1797,6 +1798,7 @@ if(document.querySelector('.modal-overlay.active'))return;
 const sig=ordersSignature(db);
 if(sig!==_lastOrdersSig){_lastOrdersSig=sig;const refreshPages=['asignacion','rutas','dashboard','pedidos','adelantos','asistencia','rendicionDelivery','rendiciones'];if(refreshPages.includes(pid))showPage(pid);}
 },LIVE_TICK_MS);
+document.addEventListener('click',function(){try{touchSession();}catch(e){}});document.addEventListener('keydown',function(){try{touchSession();}catch(e){}});window.addEventListener('beforeunload',function(){try{touchSession();}catch(e){}});
 document.addEventListener('DOMContentLoaded',function(){
 setupAllMoneyInputs();
 const dr=document.getElementById('pDirRetiro');if(dr)dr.addEventListener('input',onDirRetiroInput);
