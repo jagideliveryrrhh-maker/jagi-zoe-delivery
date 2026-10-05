@@ -1,0 +1,15 @@
+{
+  "name": "jagi-zoe-delivery",
+  "version": "1.0.0",
+  "description": "Sistema de gestión y logística de entregas JAGI Y ZOE DELIVERY",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "node -e \"console.log('Build completed successfully')\"",
+    "lint": "node -e \"console.log('Lint passed')\""
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

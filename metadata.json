@@ -1,0 +1,8 @@
+{
+  "name": "JAGI Y ZOE DELIVERY",
+  "description": "Sistema de gestión y logística de entregas JAGI Y ZOE DELIVERY",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ],
+  "permissions": []
+}
