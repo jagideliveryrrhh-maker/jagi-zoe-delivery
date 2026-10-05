@@ -1526,7 +1526,7 @@ var totalBase=items.reduce(function(s,x){return s+(x.baseBruta||0);},0);var tota
 var thead=document.querySelector('#page-liquidacion thead tr');if(thead){thead.innerHTML='<th>Empleado</th><th>Cargo</th><th>Ingreso</th><th>Sueldo</th><th>Valor Día</th><th>Base</th><th>Aus.</th><th>Bruta</th><th>Desc. Aus.</th><th>Adelantos</th><th>Otros</th><th>Neto</th>'+(inAguin?'<th>Aguinaldo</th><th>Total</th>':'')+'<th>Estado</th><th>Acciones</th>';}
 var statsEl=document.getElementById('liqStats');if(statsEl){statsEl.innerHTML='<div class="stat-card"><div class="stat-icon icon-purple">👥</div><div class="stat-value">'+items.length+'</div><div class="stat-label">Empleados</div></div><div class="stat-card"><div class="stat-icon icon-blue">💵</div><div class="stat-value">'+formatGs(totalBase)+'</div><div class="stat-label">Brutos</div></div><div class="stat-card"><div class="stat-icon icon-orange">❌</div><div class="stat-value">'+formatGs(totalDesc)+'</div><div class="stat-label">Desc. Aus.</div></div><div class="stat-card"><div class="stat-icon icon-pink">💸</div><div class="stat-value">'+formatGs(totalAdel)+'</div><div class="stat-label">Adelantos</div></div><div class="stat-card"><div class="stat-icon icon-yellow">🧾</div><div class="stat-value">'+formatGs(totalOtros)+'</div><div class="stat-label">Otros</div></div><div class="stat-card"><div class="stat-icon icon-green">💰</div><div class="stat-value">'+formatGs(totalNeto)+'</div><div class="stat-label">Neto</div></div>'+(inAguin?'<div class="stat-card"><div class="stat-icon icon-purple">🎁</div><div class="stat-value">'+formatGs(totalAguinaldo)+'</div><div class="stat-label">Aguinaldo</div></div><div class="stat-card"><div class="stat-icon icon-green">📈</div><div class="stat-value">'+formatGs(totalNeto+totalAguinaldo)+'</div><div class="stat-label">Total</div></div>':'')+'<div class="stat-card"><div class="stat-icon icon-orange">🟡</div><div class="stat-value">'+pendientes+'</div><div class="stat-label">Pendientes</div></div><div class="stat-card"><div class="stat-icon icon-green">🟢</div><div class="stat-value">'+pagados+'</div><div class="stat-label">Pagados</div></div>';}
 var liqCards=document.querySelectorAll('#liqStats .stat-card');if(liqCards)liqCards.forEach(function(el,i){var cats=['lq_empleados','lq_brutos','lq_desc','lq_adelantos','lq_otros','lq_neto'];if(inAguin){cats.push('lq_aguinaldo');cats.push('lq_total');}cats.push('lq_pendientes');cats.push('lq_pagados');if(cats[i]){el.style.cursor='pointer';el.onclick=(function(cid){return function(){abrirDetalleDashboard(cid);};})(cats[i]);}});
-tbody.innerHTML=items.length===0?'<tr><td colspan="16" class="text-center" style="padding:32px">No hay trabajadores para mostrar.</td></tr>':items.map(function(it){var netoClass=it.neto<0?'liq-negativo':'liq-neto';var estadoBadge=it.estadoPago==='Pagado'?'<span class="badge badge-pago-ok">🟢 Pagado</span>':'<span class="badge badge-pago-pend">🟡 Pendiente</span>';return '<tr><td><strong>'+it.nombre+'</strong><br><small style="color:var(--gray-500)">'+(it.cedula||'')+'</small><br><button class="btn btn-xs btn-edit" onclick="openEditarPersonal(\''+it.userId+'\')">✏️ Datos</button></td><td>'+(LIQ_ROL_LABEL[it.rol]||it.rol)+'</td><td><input type="date" class="liq-cell-input fecha" value="'+(it.fechaIngreso||'')+'" onchange="actualizarCampoLiq(\''+it.userId+'\',\'fechaIngreso\',this.value)"></td><td><input type="number" min="0" step="1000" class="liq-cell-input" value="'+it.sueldoMensual+'" onchange="actualizarCampoLiq(\''+it.userId+'\',\'sueldoMensual\',this.value)"></td><td class="currency">'+formatGs(it.valorDia)+'</td><td><input type="number" min="1" max="31" class="liq-cell-input small" value="'+it.diasBase+'" onchange="actualizarCampoLiq(\''+it.userId+'\',\'diasBase\',this.value)"></td><td><input type="number" min="0" max="'+it.diasBase+'" class="liq-cell-input small" value="'+it.diasAusencia+'" onchange="actualizarCampoLiq(\''+it.userId+'\',\'diasAusencia\',this.value)"></td><td class="currency">'+formatGs(it.baseBruta)+'</td><td class="currency" style="color:var(--danger)">-'+formatGs(it.descuentoAusencia)+'</td><td class="currency" style="color:#6a1b9a">-'+formatGs(it.adelantosTotal||0)+'</td><td><input type="number" min="0" step="1000" class="liq-cell-input" value="'+it.otrosDescuentos+'" onchange="actualizarCampoLiq(\''+it.userId+'\',\'otrosDescuentos\',this.value)"></td><td class="currency '+netoClass+'">'+formatGs(it.neto)+'</td>'+(inAguin?'<td class="currency liq-aguinaldo">'+formatGs(it.aguinaldo)+'</td><td class="currency liq-total">'+formatGs(it.netoConAguinaldo)+'</td>':'')+'<td><select class="asist-select" onchange="cambiarEstadoLiquidacion(\''+it.userId+'\',\''+it.periodo+'\',this.value)"><option value="Pendiente"'+(it.estadoPago==='Pagado'?'':' selected')+'>Pendiente</option><option value="Pagado"'+(it.estadoPago==='Pagado'?' selected':'')+'>Pagado</option></select>'+(it.fechaPago?'<br><small style="color:var(--gray-500)">'+it.fechaPago+'</small>':'')+'</td><td><div class="liq-actions"><button class="btn btn-xs btn-secondary" onclick="abrirDetalleDescuentos(\''+it.userId+'\')">📋 Detalle</button>'+(it.estadoPago==='Pagado'?'<button class="btn btn-xs btn-warning" onclick="anularPagoLiq(\''+it.userId+'\')">↩</button>':'<button class="btn btn-xs btn-success" onclick="marcarPagadoLiq(\''+it.userId+'\')">🟢</button>')+'<button class="btn btn-xs btn-whatsapp" onclick="whatsappLiquidacion(\''+it.userId+'\')">💬</button></div></td></tr>';}).join('');
+tbody.innerHTML=items.length===0?'<tr><td colspan="16" class="text-center" style="padding:32px">No hay trabajadores para mostrar.</td></tr>':items.map(function(it){var netoClass=it.neto<0?'liq-negativo':'liq-neto';var estadoBadge=it.estadoPago==='Pagado'?'<span class="badge badge-pago-ok">🟢 Pagado</span>':'<span class="badge badge-pago-pend">🟡 Pendiente</span>';return '<tr><td><strong>'+it.nombre+'</strong><br><small style="color:var(--gray-500)">'+(it.cedula||'')+'</small><br><button class="btn btn-xs btn-edit" onclick="openEditarPersonal(\''+it.userId+'\')">✏️ Datos</button></td><td>'+(LIQ_ROL_LABEL[it.rol]||it.rol)+'</td><td><input type="date" class="liq-cell-input fecha" value="'+(it.fechaIngreso||'')+'" onchange="actualizarCampoLiq(\''+it.userId+'\',\'fechaIngreso\',this.value)"></td><td><input type="number" min="0" step="1000" class="liq-cell-input" value="'+it.sueldoMensual+'" onchange="actualizarCampoLiq(\''+it.userId+'\',\'sueldoMensual\',this.value)"></td><td class="currency">'+formatGs(it.valorDia)+'</td><td><input type="number" min="1" max="31" class="liq-cell-input small" value="'+it.diasBase+'" onchange="actualizarCampoLiq(\''+it.userId+'\',\'diasBase\',this.value)"></td><td><input type="number" min="0" max="'+it.diasBase+'" class="liq-cell-input small" value="'+it.diasAusencia+'" onchange="actualizarCampoLiq(\''+it.userId+'\',\'diasAusencia\',this.value)"></td><td class="currency">'+formatGs(it.baseBruta)+'</td><td class="currency" style="color:var(--danger)">-'+formatGs(it.descuentoAusencia)+'</td><td class="currency" style="color:#6a1b9a">-'+formatGs(it.adelantosTotal||0)+'</td><td><input type="number" min="0" step="1000" class="liq-cell-input" value="'+it.otrosDescuentos+'" onchange="actualizarCampoLiq(\''+it.userId+'\',\'otrosDescuentos\',this.value)"></td><td class="currency '+netoClass+'">'+formatGs(it.neto)+'</td>'+(inAguin?'<td class="currency liq-aguinaldo">'+formatGs(it.aguinaldo)+'</td><td class="currency liq-total">'+formatGs(it.netoConAguinaldo)+'</td>':'')+'<td><select class="asist-select" onchange="cambiarEstadoLiquidacion(\''+it.userId+'\',\''+it.periodo+'\',this.value)"><option value="Pendiente"'+(it.estadoPago==='Pagado'?'':' selected')+'>Pendiente</option><option value="Pagado"'+(it.estadoPago==='Pagado'?' selected':'')+'>Pagado</option></select>'+(it.fechaPago?'<br><small style="color:var(--gray-500)">'+it.fechaPago+'</small>':'')+'</td><td><div class="liq-actions"><button class="btn btn-xs btn-secondary" onclick="abrirDetalleDescuentos(\''+it.userId+'\')">📋 Detalle</button><button class="btn btn-xs btn-primary" onclick="imprimirReciboTrabajador(\''+it.userId+'\')">🧾 Recibo</button>'+(it.estadoPago==='Pagado'?'<button class="btn btn-xs btn-warning" onclick="anularPagoLiq(\''+it.userId+'\')">↩</button>':'<button class="btn btn-xs btn-success" onclick="marcarPagadoLiq(\''+it.userId+'\')">🟢</button>')+'<button class="btn btn-xs btn-whatsapp" onclick="whatsappLiquidacion(\''+it.userId+'\')">💬</button></div></td></tr>';}).join('');
 }
 // ===== DETALLES DEL DASHBOARD (por tarjeta) =====
 var _admDashCat='';
@@ -2196,6 +2196,68 @@ imprimirAsistencia=function(){
   try{_imprimirAsistOrig();}finally{db.users=backup;}
 };
 /* #### FIN ZOE v4 #### */
+/* ========== ZOE v5 · RECIBO DE SUELDO (imprimible) ========== */
+function imprimirReciboTrabajador(userId){
+  var periodo=getPeriodoLiq();var db=getDB();
+  var partes=periodo.split('-').map(Number);var anio=partes[0],mes=partes[1];
+  var nombresMes=['','ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+  var u=(db.users||[]).find(function(x){return x.id===userId;});if(!u)return;
+  var it=(db.liquidaciones||[]).find(function(x){return x.periodo===periodo&&x.userId===userId;});
+  if(!it){it=crearItemLiq(u,periodo,{});}calcularItemLiq(it);
+  var adelantos=adelantosDe(db,userId,periodo);
+  var diasTrab=0,diasAus=0,diasFranco=0,diasOtros=0;
+  if(db.asistencia&&db.asistencia[userId]){
+    Object.keys(db.asistencia[userId]).forEach(function(f){
+      if(f.slice(0,7)!==periodo)return;var r=db.asistencia[userId][f];
+      if(r.estado==='Trabajó')diasTrab++;
+      else if(r.estado==='Ausente injustificado')diasAus++;
+      else if(r.estado==='Franco')diasFranco++;
+      else if(r.estado==='Licencia'||r.estado==='Enfermedad'||r.estado==='Feriado'||r.estado==='Sin actividad')diasOtros++;
+    });
+  }
+  var esDic=(periodo.slice(5,7)==='12');
+  var periodoTxt=nombresMes[mes]+' '+anio;
+  var html='<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Recibo - '+(u.name||'')+'</title>';
+  html+='<style>body{font-family:Arial,Helvetica,sans-serif;color:#111;padding:24px;font-size:12px}h1{font-size:17px;margin:0;text-align:center;letter-spacing:1px}h2{font-size:13px;margin:2px 0 0;text-align:center;color:#333}.sub{text-align:center;font-size:11px;color:#555;margin-bottom:14px}.box{border:2px solid #111;border-radius:8px;padding:14px 18px;max-width:720px;margin:0 auto}.fila{display:flex;justify-content:space-between;border-bottom:1px dashed #bbb;padding:5px 0}.fila b{width:45%}table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}th,td{border:1px solid #999;padding:6px 8px}th{background:#eee;text-align:left}.num{text-align:right;font-family:"Courier New",monospace}.total{font-size:15px;font-weight:800;background:#f0f0f0}.firmas{display:flex;gap:40px;margin-top:46px}.firmas div{flex:1;text-align:center;border-top:1px solid #333;padding-top:6px}.btn-print{position:fixed;top:10px;right:10px;background:#333;color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer;font-weight:700}@media print{.btn-print{display:none}body{padding:8px}}</style></head><body>';
+  html+='<button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>';
+  html+='<div class="box"><h1>LIQUIDACIÓN DE SALARIOS</h1><h2>JAGI Y ZOE GROUP</h2><div class="sub">(Conforme al Art. 236 del C. del T.)</div>';
+  html+='<div class="fila"><b>Empleador:</b><span>'+safeHtml(currentUser&&currentUser.name?currentUser.name:'JAGI Y ZOE GROUP')+'</span></div>';
+  html+='<div class="fila"><b>Apellidos y Nombres del Trabajador:</b><span>'+safeHtml(u.name||'')+'</span></div>';
+  html+='<div class="fila"><b>C.I. No.:</b><span>'+safeHtml(u.cedula||'—')+'</span></div>';
+  html+='<div class="fila"><b>Cargo:</b><span>'+safeHtml((LIQ_ROL_LABEL&&LIQ_ROL_LABEL[u.role])||u.role||'—')+'</span></div>';
+  html+='<div class="fila"><b>Periodo de Pago:</b><span>'+periodoTxt+'</span></div>';
+  html+='<div class="fila"><b>Fecha de Ingreso:</b><span>'+(u.fechaIngreso||'—')+'</span></div>';
+  html+='<div class="fila"><b>Días Trab.:</b><span>'+diasTrab+'</span></div>';
+  html+='<h3 style="margin:14px 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:1px">Detalle de Ingresos</h3>';
+  html+='<table><thead><tr><th>Concepto</th><th class="num">Cantidad</th><th class="num">Valor Unit.</th><th class="num">Total</th></tr></thead><tbody>';
+  html+='<tr><td>Salario base</td><td class="num">1</td><td class="num">'+formatGs(it.sueldoMensual)+'</td><td class="num">'+formatGs(it.baseBruta)+'</td></tr>';
+  if(it.diasAusencia>0)html+='<tr><td>Días no trabajados ('+it.diasAusencia+')</td><td class="num">'+it.diasAusencia+'</td><td class="num">'+formatGs(it.valorDia)+'</td><td class="num">-'+formatGs(it.descuentoAusencia)+'</td></tr>';
+  html+='<tr class="total"><td colspan="3">TOTAL DEVENGADO</td><td class="num">'+formatGs(it.baseBruta-it.descuentoAusencia)+'</td></tr>';
+  html+='</tbody></table>';
+  html+='<h3 style="margin:14px 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:1px">Descuentos</h3>';
+  html+='<table><thead><tr><th>Concepto</th><th class="num">Monto</th></tr></thead><tbody>';
+  html+='<tr><td>Días no trabajados ('+it.diasAusencia+' x '+formatGs(it.valorDia)+')</td><td class="num">-'+formatGs(it.descuentoAusencia)+'</td></tr>';
+  if(adelantos.length===0&&!(it.adelantosManuales>0))html+='<tr><td>Adelantos</td><td class="num">Gs. 0</td></tr>';
+  adelantos.forEach(function(a){html+='<tr><td>ADELANTO ('+safeHtml(a.concepto)+' · '+a.fecha+')</td><td class="num">-'+formatGs(a.monto)+'</td></tr>';});
+  if(it.adelantosManuales>0)html+='<tr><td>ADELANTO MANUAL</td><td class="num">-'+formatGs(it.adelantosManuales)+'</td></tr>';
+  if(it.otrosDescuentos>0)html+='<tr><td>Otros descuentos</td><td class="num">-'+formatGs(it.otrosDescuentos)+'</td></tr>';
+  var totalDesc=it.descuentoAusencia+(it.adelantosTotal||0)+(it.otrosDescuentos||0);
+  html+='<tr class="total"><td>TOTAL DESCUENTOS</td><td class="num">-'+formatGs(totalDesc)+'</td></tr>';
+  html+='</tbody></table>';
+  html+='<table style="margin-top:10px"><tbody>';
+  html+='<tr class="total"><td>TOTAL A COBRAR</td><td class="num">'+formatGs(it.neto)+'</td></tr>';
+  if(esDic)html+='<tr class="total"><td>AGUINALDO (Art. 243 C.T.)</td><td class="num">'+formatGs(it.aguinaldo)+'</td></tr><tr class="total"><td>TOTAL CON AGUINALDO</td><td class="num">'+formatGs(it.netoConAguinaldo)+'</td></tr>';
+  html+='</tbody></table>';
+  html+='<div class="fila" style="margin-top:10px"><b>Estado de Pago:</b><span>'+(it.estadoPago||'Pendiente')+(it.fechaPago?' · '+it.fechaPago:'')+'</span></div>';
+  html+='<div class="firmas"><div>Firma del Empleado: _______________________<br><small>Aclaración y Cédula</small></div><div>Firma del Empleador: _______________________<br><small>JAGI Y ZOE GROUP</small></div></div>';
+  html+='<div style="text-align:center;font-size:10px;color:#666;margin-top:18px">Documento generado por el sistema JAGI Y ZOE DELIVERY · '+new Date().toLocaleString('es-PY')+'</div>';
+  html+='</div></body></html>';
+  var w=window.open('','_blank','width=820,height=900');
+  if(!w){showToast('Habilitá popups','error');return;}
+  w.document.write(html);w.document.close();w.focus();
+}
+function safeHtml(s){return String(s==null?'':s).replace(/[<>&"]/g,'');}
+/* #### FIN ZOE v5 #### */
 </script>
 </body>
 </html>
