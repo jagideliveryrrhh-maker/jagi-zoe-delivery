@@ -60,7 +60,8 @@ body.sidebar-collapsed .sidebar{transform:translateX(-260px)}
 body.sidebar-collapsed .main-content{margin-left:0}
 #btnShowSidebar{display:none;position:fixed;left:0;top:50%;transform:translateY(-50%);width:22px;height:70px;background:var(--gray-900);color:#fff;border:none;border-radius:0 8px 8px 0;cursor:pointer;z-index:101;font-size:14px;align-items:center;justify-content:center}
 body.sidebar-collapsed #btnShowSidebar{display:flex}
-#btnHideSidebar{position:absolute;top:50%;right:-18px;transform:translateY(-50%);width:18px;height:60px;background:var(--gray-900);color:#fff;border:none;border-radius:0 8px 8px 0;cursor:pointer;z-index:101;font-size:12px}
+#btnHideSidebar{position:fixed;left:264px;top:50%;transform:translateY(-50%);width:20px;height:60px;background:var(--gray-900);color:#fff;border:none;border-radius:0 8px 8px 0;cursor:pointer;z-index:101;font-size:12px}
+body.sidebar-collapsed #btnHideSidebar{display:none}
 .sidebar-header{padding:22px 18px;border-bottom:1px solid rgba(255,255,255,.08);position:relative}
 .sidebar-brand{font-size:1rem;font-weight:800;background:linear-gradient(135deg,var(--primary-light),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2}
 .sidebar-user{margin-top:12px;font-size:.8rem;color:var(--gray-500)}
@@ -345,8 +346,8 @@ table tr:hover{background:rgba(108,92,231,.03)}
 </div>
 <div class="app-container" id="appContainer">
 <button id="btnShowSidebar" onclick="toggleSidebarCollapse()" title="Mostrar menú ]">⟩</button>
-<aside class="sidebar" id="sidebar">
 <button id="btnHideSidebar" onclick="toggleSidebarCollapse()" title="Ocultar menú X">✕</button>
+<aside class="sidebar" id="sidebar">
 <div class="sidebar-header">
 <button class="sidebar-close-btn" onclick="toggleSidebar()" title="Cerrar menú">✕</button>
 <div class="sidebar-brand-row">
