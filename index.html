@@ -1833,7 +1833,7 @@ if(document.querySelector('.modal-overlay.active'))return;
 const sig=ordersSignature(db);
 if(sig!==_lastOrdersSig){_lastOrdersSig=sig;const refreshPages=['asignacion','rutas','dashboard','pedidos','adelantos','asistencia','rendicionDelivery','rendiciones'];if(refreshPages.includes(pid))showPage(pid);}
 },LIVE_TICK_MS);
-document.addEventListener('click',function(){try{touchSession();}catch(e){}});document.addEventListener('keydown',function(){try{touchSession();}catch(e){}});window.addEventListener('beforeunload',function(){try{touchSession();}catch(e){}});
+document.addEventListener('click',function(){try{touchSession();}catch(e){}});document.addEventListener('keydown',function(){try{touchSession();}catch(e){}});window.addEventListener('beforeunload',function(){try{touchSession();}catch(e){}});document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'){try{touchSession();}catch(e){}}});setInterval(function(){try{touchSession();}catch(e){}},60000);
 document.addEventListener('DOMContentLoaded',function(){
 setupAllMoneyInputs();
 const dr=document.getElementById('pDirRetiro');if(dr)dr.addEventListener('input',onDirRetiroInput);
