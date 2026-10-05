@@ -509,7 +509,7 @@ table tr:hover{background:rgba(108,92,231,.03)}
 </div>
 </div>
 <div class="card-body">
-<div class="alert-info">🤖 Evidencia real + 📍 GPS al fichar entrada. La entrada y salida del día NO se sobrescriben al volver a apretar.</div>
+<div class="alert-info" id="asistAlertInfo">🤖 Evidencia real + 📍 GPS al fichar entrada. La entrada y salida del día NO se sobrescriben al volver a apretar. 👆 Tocá las tarjetas de arriba para filtrar la lista.</div>
 <div class="stats-grid" id="asistStats"></div>
 <div class="asist-grid" id="asistCards"></div>
 </div>
@@ -569,7 +569,7 @@ table tr:hover{background:rgba(108,92,231,.03)}
 <div class="page-content page hidden" id="page-adminDashboard">
 <div class="stats-grid" id="adminStats"></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
-<div class="card"><div class="card-header"><h3>📊 Rendimiento por Delivery</h3></div><div class="card-body"><div class="table-responsive"><table><thead><tr><th>Delivery</th><th>Entregas</th><th>Total Cobrado</th><th>Combustible</th></tr></thead><tbody id="adminDeliveryTable"></tbody></table></div></div></div>
+<div class="card"><div class="card-header"><h3>📊 Rendimiento por Delivery</h3></div><div class="card-body"><div class="table-responsive"><table><thead><tr><th>Delivery</th><th>Entregas</th><th>Total Envíos (servicio)</th><th>Combustible</th></tr></thead><tbody id="adminDeliveryTable"></tbody></table></div></div></div>
 <div class="card"><div class="card-header"><h3>🏪 Top Tiendas</h3></div><div class="card-body"><div class="table-responsive"><table><thead><tr><th>Tienda</th><th>Pedidos</th><th>Total Cobrado</th><th>Servicio</th></tr></thead><tbody id="adminTiendasTable"></tbody></table></div></div></div>
 </div>
 </div>
@@ -1434,7 +1434,7 @@ function renderDashboard(db){const stats=document.getElementById('ruteadorStats'
 function renderRutas(db){const stats=document.getElementById('rutasStats'),container=document.getElementById('rutasContainer');if(!stats||!container)return;const today=hoyLocal(),todayPedidos=db.pedidos.filter(function(p){return p.fecha===today;}),deliverys=db.users.filter(function(u){return u.role==='delivery'&&u.estado==='Activo';});let statsHtml='',rutasHtml='';deliverys.forEach(function(d){const pedidos=todayPedidos.filter(function(p){return p.deliveryId===d.id;}),pendientes=pedidos.filter(function(p){return !['Entregado','Cancelado','Reagendado'].includes(p.estado);}),entregados=pedidos.filter(function(p){return p.estado==='Entregado';}),totalCobrado=entregados.reduce(function(s,p){return s+montoRendDelivery(p);},0);statsHtml+=`<div class="stat-card"><div class="stat-icon icon-blue">🏍️</div><div class="stat-value">${pendientes.length}</div><div class="stat-label">${d.name} - Activos</div></div>`;rutasHtml+=`<div class="card"><div class="card-header"><h3>🏍️ ${d.name} <span class="badge badge-route">${pendientes.length} activos</span> <span class="badge badge-delivered">${entregados.length} entregados</span></h3><span class="currency" style="color:var(--success)">${formatGs(totalCobrado)}</span></div><div class="card-body">${pedidos.length===0?'<div class="empty-state"><p>Sin pedidos</p></div>':`<div class="table-responsive"><table><thead><tr><th>#</th><th>ID</th><th>Tienda</th><th>Cliente</th><th>Entrega</th><th>Monto</th><th>Ventana</th><th>Estado</th></tr></thead><tbody>${pedidos.sort(function(a,b){return (a.ordenEntrega||99)-(b.ordenEntrega||99);}).map(function(p,i){return `<tr><td>${i+1}</td><td><strong>${p.id}</strong></td><td>${p.tienda}</td><td>${p.cliente}</td><td style="word-break:break-all">${p.ciudad} - ${safeText(p.dirEntrega)}</td><td class="currency">${formatGs(p.monto)}</td><td>${p.ventana?'⏰ '+safeText(p.ventana):'—'}</td><td>${badgeEstado(p.estado)}</td></tr>`;}).join('')}</tbody></table></div>`}</div></div>`;});stats.innerHTML=statsHtml;container.innerHTML=rutasHtml;}
 function renderAdminDashboard(db){const stats=document.getElementById('adminStats'),delTable=document.getElementById('adminDeliveryTable'),tieTable=document.getElementById('adminTiendasTable');if(!stats)return;const today=hoyLocal(),todayPedidos=db.pedidos,entregados=todayPedidos.filter(function(p){return p.estado==='Entregado';}),totalCobrado=entregados.reduce(function(s,p){return s+montoRendDelivery(p);},0),totalServicio=entregados.reduce(function(s,p){return s+(p.costo||0);},0),totalGastos=db.gastos.reduce(function(s,g){return s+(Number(g.monto)||0);},0),periodoLiq=getPeriodoLiq(),totalSueldosPendientes=(db.liquidaciones||[]).filter(function(x){return x.periodo===periodoLiq&&(x.estadoPago||'Pendiente')!=='Pagado';}).reduce(function(s,x){return s+(x.neto||0);},0),totalAdelantosPendientes=(db.adelantos||[]).filter(function(a){return a.estado!=='Anulado'&&a.fecha&&a.fecha.slice(0,7)===periodoLiq;}).reduce(function(s,a){return s+(a.monto||0);},0),totalDeudasTiendas=db.pedidos.filter(function(p){return p.estado==='Entregado'&&(p.estadoPago||'Pendiente a Pagar')!=='Pagado';}).reduce(function(s,p){return s+Math.max(0,montoRendTienda(p)-(p.costo||0));},0),totalIngresos=totalCobrado+totalServicio,balanceNeto=totalIngresos-totalGastos-totalSueldosPendientes-totalAdelantosPendientes-totalDeudasTiendas;stats.innerHTML=`<div class="stat-card"><div class="stat-icon icon-purple">📦</div><div class="stat-value">${todayPedidos.length}</div><div class="stat-label">Pedidos Hoy</div></div><div class="stat-card"><div class="stat-icon icon-green">✅</div><div class="stat-value">${entregados.length}</div><div class="stat-label">Entregados</div></div><div class="stat-card"><div class="stat-icon icon-pink">💰</div><div class="stat-value">${formatGs(totalCobrado)}</div><div class="stat-label">Total Cobrado</div></div><div class="stat-card"><div class="stat-icon icon-blue">🔧</div><div class="stat-value">${formatGs(totalServicio)}</div><div class="stat-label">Ingreso Servicio</div></div><div class="stat-card"><div class="stat-icon icon-orange">⛽</div><div class="stat-value">${formatGs(totalGastos)}</div><div class="stat-label">Gastos</div></div><div class="stat-card"><div class="stat-icon icon-green">📈</div><div class="stat-value">${formatGs(balanceNeto)}</div><div class="stat-label">Balance Neto</div></div><div class="stat-card"><div class="stat-icon icon-yellow">💵</div><div class="stat-value">${formatGs(totalSueldosPendientes)}</div><div class="stat-label">Salarios pendientes</div></div><div class="stat-card"><div class="stat-icon icon-pink">💸</div><div class="stat-value">${formatGs(totalAdelantosPendientes)}</div><div class="stat-label">Adelantos vigentes</div></div><div class="stat-card"><div class="stat-icon icon-orange">🏪</div><div class="stat-value">${formatGs(totalDeudasTiendas)}</div><div class="stat-label">Deudas de tiendas</div></div>`;//Detalle por tarjeta
 var _cards=document.querySelectorAll('#adminStats .stat-card');if(_cards)_cards.forEach(function(el,i){el.style.cursor='pointer';el.onclick=function(){var cats=['pedidos','entregados','cobrado','servicio','gastos','balance','salarios','adelantos','deudas'];abrirDetalleDashboard(cats[i]);};});
-const deliverys=db.users.filter(function(u){return u.role==='delivery';});if(delTable)delTable.innerHTML=deliverys.map(function(d){const dp=entregados.filter(function(p){return p.deliveryId===d.id;}),cobrado=dp.reduce(function(s,p){return s+montoRendDelivery(p);},0),comb=db.gastos.filter(function(g){return g.fecha===today&&g.deliveryId===d.id&&g.concepto==='Combustible';}).reduce(function(s,g){return s+g.monto;},0);return `<tr><td>${d.name}</td><td>${dp.length}</td><td class="currency">${formatGs(cobrado)}</td><td class="currency">${formatGs(comb)}</td></tr>`;}).join('');const tiendaMap={};entregados.forEach(function(p){if(!tiendaMap[p.tienda])tiendaMap[p.tienda]={count:0,cobrado:0,servicio:0};tiendaMap[p.tienda].count++;tiendaMap[p.tienda].cobrado+=montoRendTienda(p);tiendaMap[p.tienda].servicio+=p.costo||0;});if(tieTable)tieTable.innerHTML=Object.entries(tiendaMap).sort(function(a,b){return b[1].count-a[1].count;}).map(function(entry){const name=entry[0],d=entry[1];return `<tr><td>${name}</td><td>${d.count}</td><td class="currency">${formatGs(d.cobrado)}</td><td class="currency">${formatGs(d.servicio)}</td></tr>`;}).join('')||'<tr><td colspan="4" class="text-center">Sin datos</td></tr>';}
+const deliverys=db.users.filter(function(u){return u.role==='delivery';});if(delTable)delTable.innerHTML=deliverys.map(function(d){const dp=entregados.filter(function(p){return p.deliveryId===d.id;}),cobrado=dp.reduce(function(s,p){return s+(Number(p.costo)||0);},0),comb=db.gastos.filter(function(g){return g.fecha===today&&g.deliveryId===d.id&&g.concepto==='Combustible';}).reduce(function(s,g){return s+g.monto;},0);return `<tr><td>${d.name}</td><td>${dp.length}</td><td class="currency">${formatGs(cobrado)}</td><td class="currency">${formatGs(comb)}</td></tr>`;}).join('');const tiendaMap={};entregados.forEach(function(p){if(!tiendaMap[p.tienda])tiendaMap[p.tienda]={count:0,cobrado:0,servicio:0};tiendaMap[p.tienda].count++;tiendaMap[p.tienda].cobrado+=montoRendTienda(p);tiendaMap[p.tienda].servicio+=p.costo||0;});if(tieTable)tieTable.innerHTML=Object.entries(tiendaMap).sort(function(a,b){return b[1].count-a[1].count;}).map(function(entry){const name=entry[0],d=entry[1];return `<tr><td>${name}</td><td>${d.count}</td><td class="currency">${formatGs(d.cobrado)}</td><td class="currency">${formatGs(d.servicio)}</td></tr>`;}).join('')||'<tr><td colspan="4" class="text-center">Sin datos</td></tr>';}
 // ===== PEDIDOS (LISTA) =====
 function renderPedidos(){const tbody=document.getElementById('pedidosTable');if(!tbody)return;const db=getDB();let pedidos=[...db.pedidos];const feSet=MULTI.msFilterEstado.selected,fdSet=MULTI.msFilterDelivery.selected;const ftEl=document.getElementById('filterTienda'),ffEl=document.getElementById('filterFecha');const ft=ftEl?ftEl.value:'',ff=ffEl?ffEl.value:'';if(currentUser&&currentUser.role==='ruteador'){pedidos=pedidos.filter(function(p){return !p.ruteadorId||p.ruteadorId===currentUser.id;});}if(feSet.size)pedidos=pedidos.filter(function(p){return feSet.has(p.estado);});if(fdSet.size)pedidos=pedidos.filter(function(p){return fdSet.has(p.deliveryId);});if(ft)pedidos=pedidos.filter(function(p){return p.tiendaId===ft;});if(ff)pedidos=pedidos.filter(function(p){return p.fecha===ff;});pedidos.sort(function(a,b){return b.id.localeCompare(a.id);});tbody.innerHTML=pedidos.map(function(p){const bloqueado=pedidoBloqueadoPorRendido(p);return `<tr style="${bloqueado?'opacity:.7;background:#fff3cd':''}"><td><strong>${p.id}</strong>${bloqueado?' <span class="badge badge-lock">🔒 Rendido</span>':''}</td><td>${p.fecha}</td><td>${p.tienda}</td><td>${p.cliente}</td><td>${p.ciudad}<br><small style="color:var(--gray-500);word-break:break-all">${safeText(p.dirEntrega)}</small></td><td class="currency">${formatGs(p.monto)}</td><td class="currency">${formatGs(p.costo)}</td><td>${p.delivery||'<span style="color:var(--gray-500)">-</span>'}</td><td>${badgeEstado(p.estado)} ${p.verificado?'<span class="badge badge-checked">✓</span>':''} ${p.comprobante?(p.comprobanteVerificado?'<span class="badge badge-pago-ok">💳 Verificado</span>':'<span class="badge badge-pago-pend">💳 Comprobante</span>'):''}</td><td>${bloqueado?`<button class="btn btn-sm btn-secondary" onclick="openEstadoModal('${p.id}')" title="Bloqueado por rendición">🔒</button>`:`<button class="btn btn-sm btn-outline" onclick="openEstadoModal('${p.id}')">✏️</button>`} <button class="btn btn-xs ${p.estado==='Cancelado'?'btn-warning':'btn-danger'}" onclick="${p.estado==='Cancelado'?`reactivarPedido('${p.id}')`:`cancelarPedido('${p.id}')`}">${p.estado==='Cancelado'?'🔄 Reactivar':'❌ Cancelar'}</button></td></tr>`;}).join('')||'<tr><td colspan="11" class="text-center" style="padding:32px;color:var(--gray-500)">No hay pedidos</td></tr>';}
 function openEstadoModal(id){const db=getDB(),p=db.pedidos.find(function(x){return x.id===id;});if(!p)return;const bloqueado=pedidoBloqueadoPorRendido(p);if(bloqueado&&!(currentUser&&currentUser.role==='admin')){showToast('🔒 Pedido entregado y rendido: no se puede modificar.','error');return;}if(bloqueado&&!confirm('🔒 Pedido ENTREGADO y RENDIDO.\nSolo Administración puede modificarlo (queda auditado).\n¿Continuar?')){return;}document.getElementById('estadoPedidoId').value=id;document.getElementById('nuevoEstado').value=p.estado;setMoneyValue('estadoMonto',p.montoCobrado||p.monto);document.getElementById('estadoObs').value=p.obs||'';const lockAviso=document.getElementById('estadoLockAviso');if(lockAviso)lockAviso.classList.toggle('hidden',!bloqueado);let info=document.getElementById('estadoComprobanteInfo');if(!info){info=document.createElement('div');info.id='estadoComprobanteInfo';info.className='form-group hidden';info.style.marginTop='10px';const montoInput=document.getElementById('estadoMonto');const montoGroup=montoInput?montoInput.closest('.form-group'):null;if(montoGroup&&montoGroup.parentNode){montoGroup.parentNode.insertBefore(info,montoGroup.nextSibling);}}if(p.comprobante){info.classList.remove('hidden');info.innerHTML='<label>📎 Comprobante de transferencia</label><div class="comp-mini"><img src="'+p.comprobante+'" alt="Comprobante"><div><div style="font-size:.82rem;font-weight:600">'+safeText(p.comprobanteNombre||'comprobante')+'</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"><a href="'+p.comprobante+'" target="_blank" rel="noopener" class="btn btn-xs btn-secondary">Abrir en Drive</a><button class="btn btn-xs btn-whatsapp" onclick="compartirComprobanteWhatsApp(\'tienda\')">💬 Enviar a tienda</button><button class="btn btn-xs btn-whatsapp" onclick="compartirComprobanteWhatsApp(\'picker\')">💬 Elegir contacto</button></div></div></div>';}else{info.classList.add('hidden');info.innerHTML='';}setupAllMoneyInputs();openModal('modalEstado');}
@@ -2087,6 +2087,115 @@ marcarRendido=function(deliveryId,fecha){
   }
 })();
 /* #### FIN ZOE v3 #### */
+
+/* ========== ZOE v4 · ASISTENCIA: ruteadora ve solo deliverys + tarjetas-filtro clicables ========== */
+var _asistCardFilter='';
+function personasAsistenciaVisibles(db){
+  return (db.users||[]).filter(function(u){
+    if(u.estado!=='Activo')return false;
+    if(currentUser&&currentUser.role==='ruteador')return u.role==='delivery';
+    return true;
+  });
+}
+function filtrarAsistCards(f){_asistCardFilter=(_asistCardFilter===f)?'':f;renderAsistencia();}
+function _asistStatCard(filtro,iconCls,emoji,valor,label){
+  var activo=(filtro==='')?(_asistCardFilter===''):(_asistCardFilter===filtro);
+  var estilo=activo?'box-shadow:0 0 0 3px var(--primary);border-radius:12px;':'';
+  return '<div class="stat-card" style="cursor:pointer;'+estilo+'" onclick="filtrarAsistCards(\''+filtro+'\')" title="Tocar para filtrar"><div class="stat-icon '+iconCls+'">'+emoji+'</div><div class="stat-value">'+valor+'</div><div class="stat-label">'+label+'</div></div>';
+}
+renderAsistencia=function(){
+  if(!currentUser)return;
+  var db=getDB();
+  var fechaEl=document.getElementById('asistFecha');
+  var fecha=(fechaEl&&fechaEl.value)||hoyLocal();
+  var personas=personasAsistenciaVisibles(db);
+  /* Select de empleado: ruteadora = solo deliverys (por trabajador o Todos) */
+  var empSel=document.getElementById('asistFiltroEmpleado');
+  var filtroEmp='';
+  if(empSel){
+    var curEmp=empSel.value;
+    empSel.innerHTML='<option value="">Todos</option>'+personas.map(function(u){return '<option value="'+u.id+'">'+u.name+' ('+rolLabel(u.role)+')</option>';}).join('');
+    empSel.value=curEmp;
+    if(empSel.value!==curEmp)empSel.value='';
+    filtroEmp=empSel.value;
+  }
+  var filtroEstEl=document.getElementById('asistFiltroEstado');
+  var filtroEst=filtroEstEl?filtroEstEl.value:'';
+  /* Aviso según rol */
+  var alertEl=document.getElementById('asistAlertInfo');
+  if(alertEl){
+    if(currentUser.role==='ruteador')alertEl.innerHTML='🛵 <strong>Como Ruteadora ves solo tus DELIVERYs</strong>: si tu delivery no trabajó ese día, marcá ❌ <strong>Ausente</strong>. 👆 Tocá las tarjetas para filtrar.';
+    else alertEl.innerHTML='🤖 Evidencia real + 📍 GPS al fichar entrada. La entrada y salida del día NO se sobrescriben al volver a apretar. 👆 Tocá las tarjetas de arriba para filtrar la lista.';
+  }
+  var cards=[],totTrab=0,totAus=0,totSin=0,totOtro=0;
+  personas.forEach(function(u){
+    if(filtroEmp&&u.id!==filtroEmp)return;
+    var ev=calcularEvidenciaAsistencia(u.id,fecha);
+    var reg=(db.asistencia&&db.asistencia[u.id]&&db.asistencia[u.id][fecha])||null;
+    var estadoFinal=reg?reg.estado:(ev&&ev.sugerencia&&ev.sugerencia.indexOf('Trabajó')===0?'Trabajó':'Sin actividad');
+    if(filtroEst&&estadoFinal!==filtroEst)return;
+    if(estadoFinal==='Trabajó')totTrab++;
+    else if(estadoFinal==='Ausente injustificado')totAus++;
+    else if(estadoFinal==='Sin actividad')totSin++;
+    else totOtro++;
+    cards.push({u:u,ev:ev,reg:reg,estadoFinal:estadoFinal});
+  });
+  /* Filtro por tarjeta tocada (Trabajaron / Ausentes / Sin actividad / Otros) */
+  var shown=cards;
+  if(_asistCardFilter==='Otros')shown=cards.filter(function(c){return ['Trabajó','Ausente injustificado','Sin actividad'].indexOf(c.estadoFinal)<0;});
+  else if(_asistCardFilter)shown=cards.filter(function(c){return c.estadoFinal===_asistCardFilter;});
+  var statsEl=document.getElementById('asistStats');
+  if(statsEl)statsEl.innerHTML=
+    _asistStatCard('Trabajó','icon-green','✅',totTrab,'Trabajaron')+
+    _asistStatCard('Ausente injustificado','icon-orange','❌',totAus,'Ausentes injustif.')+
+    _asistStatCard('Sin actividad','icon-blue','⚪',totSin,'Sin actividad')+
+    _asistStatCard('Otros','icon-purple','📋',totOtro,'Franco/Licencia/Otros')+
+    _asistStatCard('','icon-yellow','📅',shown.length,'Mostrados');
+  var cardsEl=document.getElementById('asistCards');
+  if(!cardsEl)return;
+  if(shown.length===0){cardsEl.innerHTML='<div class="empty-state"><div class="empty-icon">🕒</div><p>No hay empleados con los filtros actuales</p></div>';return;}
+  cardsEl.innerHTML=shown.map(function(c){
+    var u=c.u,ev=c.ev,reg=c.reg,estadoFinal=c.estadoFinal;
+    var evidHtml=ev?('📦 Entregas: <strong>'+ev.pedidosEntregados+'</strong> · Retiros: <strong>'+ev.pedidosRetirados+'</strong><br>📝 Pedidos cargados: <strong>'+ev.pedidosCreados+'</strong> · Checks: <strong>'+ev.pedidosCheck+'</strong> · Rutas: <strong>'+ev.rutasConfirmadas+'</strong><br>📍 GPS: <strong>'+ev.ubicacionesCount+'</strong> '+(ev.primeraUbicacion?'('+ev.primeraUbicacion+'→'+ev.ultimaUbicacion+')':'')+'<br>🕐 Fiche: <span class="fiche-time">'+(ev.fichaEntrada||'—')+' / '+(ev.fichaSalida||'—')+'</span>'+(reg&&reg.entradaLat?' 📍':'')+'<br><em>Sugerencia: '+ev.sugerencia+'</em>'):'Sin evidencia';
+    return '<div class="asist-card"><h4>👤 '+u.name+' <span class="badge '+(u.role==='admin'?'badge-remoto':u.role==='ruteador'?'badge-route':'badge-pickedup')+'">'+rolLabel(u.role)+'</span> '+badgeAsistencia(estadoFinal)+'</h4><div class="asist-evidencia">'+evidHtml+(reg&&reg.justificacion?'<br>📝 Justificación: <strong>'+reg.justificacion+'</strong><br><small>Por '+(reg.actualizadoPorNombre||'-')+' · '+new Date(reg.ts).toLocaleString('es-PY')+'</small>':'')+'</div><div class="fiche-box">'+((u.role==='delivery'||u.role==='ruteador'||u.role==='admin')?'<button class="btn btn-xs btn-success" onclick="marcarEntradaSalidaPara(\''+u.id+'\',\''+fecha+'\',\'entrada\')">🕐 Entrada</button><button class="btn btn-xs btn-warning" onclick="marcarEntradaSalidaPara(\''+u.id+'\',\''+fecha+'\',\'salida\')">🕐 Salida</button>':'')+'<button class="btn btn-xs btn-secondary" onclick="abrirDetalleAsistencia(\''+u.id+'\',\''+fecha+'\')">🔎 Ver evidencia</button></div><div class="asist-actions"><select class="asist-select" onchange="cambiarEstadoAsistencia(\''+u.id+'\',\''+fecha+'\',this.value)"><option value="">Cambiar estado...</option>'+ESTADOS_ASISTENCIA.map(function(e){return '<option value="'+e+'" '+(e===estadoFinal?'selected':'')+'>'+e+'</option>';}).join('')+'</select><button class="btn btn-xs btn-primary" onclick="marcarAsistencia(\''+u.id+'\',\''+fecha+'\',\'Trabajó\',\'Marcado manual\')">✅ Trabajó</button><button class="btn btn-xs btn-danger" onclick="pedirJustificacion(\''+u.id+'\',\''+fecha+'\',\'Ausente injustificado\')">❌ Ausente</button><button class="btn btn-xs btn-warning" onclick="pedirJustificacion(\''+u.id+'\',\''+fecha+'\',\'Franco\')">📅 Franco</button><button class="btn btn-xs btn-secondary" onclick="pedirJustificacion(\''+u.id+'\',\''+fecha+'\',\'Licencia\')">🏥 Licencia</button>'+(u.telefono?'<button class="btn btn-xs btn-whatsapp" onclick="enviarMensajeDelivery(\''+u.id+'\')" title="Enviar mensaje rápido">💬 Mensaje</button>':'')+'</div></div>';
+  }).join('');
+};
+/* Autocompletar: ruteadora solo autocompleta deliverys */
+var _autocompletarOrig=autocompletarSugerencias;
+autocompletarSugerencias=function(){
+  if(!(currentUser&&currentUser.role==='ruteador'))return _autocompletarOrig();
+  var db=getDB();
+  var fechaEl=document.getElementById('asistFecha');
+  var fecha=(fechaEl&&fechaEl.value)||hoyLocal();
+  var personas=personasAsistenciaVisibles(db);
+  var marcados=0;
+  db.asistencia=db.asistencia||{};
+  personas.forEach(function(u){
+    var ev=calcularEvidenciaAsistencia(u.id,fecha);if(!ev)return;
+    var reg=db.asistencia[u.id]&&db.asistencia[u.id][fecha];
+    if(reg&&reg.estado&&reg.estado!=='Sin actividad'&&reg.estado!=='Trabajó')return;
+    if(ev.sugerencia&&ev.sugerencia.indexOf('Trabajó')===0){
+      db.asistencia[u.id]=db.asistencia[u.id]||{};
+      var prev=db.asistencia[u.id][fecha]||{};
+      var nuevo={estado:'Trabajó',justificacion:'Autocompletado por evidencia',entrada:prev.entrada||'',salida:prev.salida||'',entradaLat:prev.entradaLat||null,entradaLng:prev.entradaLng||null,evidencia:ev,actualizadoPor:'sistema',actualizadoPorNombre:'Sistema',ts:Date.now()};
+      db.asistencia[u.id][fecha]=nuevo;
+      opUpsert('Asistencia',u.id+'|'+fecha,Object.assign({id:u.id+'|'+fecha,userId:u.id,fecha:fecha},nuevo));
+      marcados++;
+    }
+  });
+  saveDB(db);_lastOrdersSig=ordersSignature(db);
+  showToast('✨ '+marcados+' sugerencias aplicadas (solo deliverys)','success');
+  renderAsistencia();
+};
+/* Imprimir: ruteadora imprime solo sus deliverys */
+var _imprimirAsistOrig=imprimirAsistencia;
+imprimirAsistencia=function(){
+  if(!(currentUser&&currentUser.role==='ruteador'))return _imprimirAsistOrig();
+  var db=getDB();var backup=db.users;
+  db.users=personasAsistenciaVisibles(db);
+  try{_imprimirAsistOrig();}finally{db.users=backup;}
+};
+/* #### FIN ZOE v4 #### */
 </script>
 </body>
 </html>
