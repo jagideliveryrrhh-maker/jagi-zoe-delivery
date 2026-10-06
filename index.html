@@ -811,7 +811,7 @@ body.sidebar-collapsed .main-content{margin-left:0}
 <div class="form-grid">
 <div class="form-group full-width" id="cTiendaGroup"><label>Tienda *</label><select id="cTienda" onchange="onClienteTiendaSeleccionada()"><option value="">Seleccionar...</option></select></div>
 <div class="form-group full-width"><div class="info-box" id="cOrigenInfo"></div></div>
-<div class="form-group"><label>Tu nombre *</label><input type="text" id="cCliente"></div>
+<div class="form-group" style="display:none"><label>Tu nombre *</label><input type="text" id="cCliente"></div>
 <div class="form-group"><label>Tel&#233;fono *</label><input type="text" id="cTelefono"></div>
 <div class="form-group"><label>Ciudad destino *</label><select id="cCiudad"></select></div>
 <div class="form-group"><label>Monto a cobrar *</label><div class="money-input-wrapper"><input type="text" id="cMonto" class="money-input" inputmode="numeric" placeholder="0"></div><div class="info-box" id="cMontoInfo"></div></div>
@@ -3330,7 +3330,7 @@ function renderClientApp(){
      tienda en cada pedido. Sin ella se cae al selector, como antes. */
   var tiendaId=(conUbic&&propia)?propia.id:(document.getElementById('cTienda')||{}).value;
   if(tiendaId)guardarTiendaDeCliente(tiendaId);
-  var cliente=(document.getElementById('cCliente').value||'').trim()||currentUser.name;
+  var cliente=((document.getElementById('cCliente')||{}).value||'').trim()||currentUser.name;
   var telefono=(document.getElementById('cTelefono').value||'').trim()||currentUser.telefono;
   var ciudad=document.getElementById('cCiudad').value;
   var dirEntrega=document.getElementById('cDirEntrega').value.trim();
