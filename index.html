@@ -744,14 +744,13 @@ table tr:hover{background:rgba(108,92,231,.03)}
 </div>
 <div id="pubTiendaFields" class="hidden" style="margin-top:6px">
 <div class="form-grid">
-<div class="form-group"><label>Nombre comercial de la Tienda</label><input type="text" id="pubTiendaNombre" placeholder="Se completa solo con tu nombre"></div>
+<div class="form-group"><label id="lblPubTiendaNombre">Nombre comercial de la Tienda</label><input type="text" id="pubTiendaNombre" placeholder="Se completa solo con tu nombre"></div>
 <div class="form-group"><label>Ciudad *</label><select id="pubTiendaCiudad"><option value="">Seleccionar...</option></select></div>
-<div class="form-group full-width"><label>📍 Ubicación de Retiro de Pedidos *</label><input type="text" id="pubTiendaDireccion" placeholder="Dirección de la tienda donde se retiran los pedidos"></div>
-<div class="form-group full-width"><label>🗺️ Link de Google Maps del Retiro *</label><input type="text" id="pubTiendaUrlMaps" placeholder="https://maps.app.goo.gl/..." oninput="validarMapsInput('pubTiendaUrlMaps','errPubTiendaUrlMaps','pubTiendaMapsInfo')"><div class="error-message" id="errPubTiendaUrlMaps">⚠️ El link de Google Maps del retiro es obligatorio</div><div class="info-box" id="pubTiendaMapsInfo"></div></div>
+<div class="form-group full-width"><label id="lblPubTiendaDir">📍 Ubicación de Retiro de Pedidos *</label><input type="text" id="pubTiendaDireccion" placeholder="Dirección de la tienda donde se retiran los pedidos"></div>
+<div class="form-group full-width"><label>🗺️ Link de Google Maps del Retiro *</label><input type="text" id="pubTiendaUrlMaps" placeholder="https://maps.app.goo.gl/..." oninput="validarMapsInput('pubTiendaUrlMaps','errPubTiendaUrlMaps','pubTiendaMapsInfo')"><div class="error-message" id="errPubTiendaUrlMaps">⚠️ El link de Google Maps del retiro es obligatorio</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button type="button" class="btn btn-maps btn-xs" onclick="sugerirLinkMapsDesde('pubTiendaDireccion','pubTiendaUrlMaps')">🔎 Buscar esta dirección en Google Maps</button></div><div class="info-box" id="pubTiendaMapsInfo"></div></div>
 </div>
-<div class="alert-info" style="margin-top:12px">📍 Esta ubicación es donde el delivery va a <strong>retirar los pedidos</strong>. <strong>No tenés que elegir tienda: tu usuario ya ES la tienda.</strong></div>
-</div>
-<div class="alert-info" style="margin-top:12px">Tu cuenta quedará <strong>Pendiente de aprobación</strong>. Administración la aprobará y podrás usar el sistema.</div>
+<div class="alert-info" id="pubUbicInfo" style="margin-top:12px">📍 Esta ubicación es donde el delivery va a <strong>retirar los pedidos</strong>. <strong>No tenés que elegir tienda: tu usuario ya ES la tienda.</strong></div>
+</div><div class="alert-info" style="margin-top:12px">Tu cuenta quedará <strong>Pendiente de aprobación</strong>. Administración la aprobará y podrás usar el sistema.</div>
 </div>
 <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modalRegistroPublico')">Cancelar</button><button class="btn btn-primary" style="width:auto" onclick="registrarPublico()">Crear Cuenta</button></div>
 </div>
@@ -783,32 +782,43 @@ table tr:hover{background:rgba(108,92,231,.03)}
 </div>
 <div class="delivery-app" id="clientApp">
 <div class="delivery-header">
-<h2>🛍️ JAGI Y ZOE DELIVERY</h2>
+<h2>&#127970; JAGI Y ZOE DELIVERY</h2>
 <p id="clientWelcome"></p>
 </div>
-<div style="text-align:center;margin:12px 4px 4px"><button class="btn btn-primary" onclick="abrirRendicionTienda()">📄 Ver Mi Rendición</button></div>
-<div style="padding:16px;padding-bottom:110px">
-<div class="card"><div class="card-header"><h3>📦 Cargar Nuevo Pedido</h3></div><div class="card-body">
+<div style="display:flex;gap:8px;padding:10px 12px 4px;flex-wrap:wrap">
+<button class="btn btn-warning" style="flex:1;min-width:150px" onclick="abrirTarifasCliente()">&#127991; Consultar Tarifas</button>
+<button class="btn btn-maps" style="flex:1;min-width:150px" onclick="abrirModalFlyer()">&#128196; Generar Flyer</button>
+<button class="btn btn-secondary" style="flex:1;min-width:150px" onclick="abrirRendicionTienda()">&#128176; Mi Rendici&#243;n</button>
+</div>
+<div style="display:flex;gap:8px;padding:8px 12px 4px">
+<button class="btn btn-primary" style="flex:1" id="clientTabPedidos" onclick="clientTab('pedidos')">&#128230; Mis Pedidos</button>
+<button class="btn btn-secondary" style="flex:1" id="clientTabRendicion" onclick="clientTab('rendicion')">&#128202; Rendici&#243;n</button>
+</div>
+<div id="clientPanePedidos" style="padding:0 16px 20px">
+<div class="card" id="clientDatosCard"><div class="card-header"><h3>&#128205; Mis Datos</h3></div><div class="card-body"><div id="clientDatosBody"></div><button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="abrirDatosCliente()">&#9998; Editar mis datos / ubicaci&#243;n</button></div></div>
+<div class="card"><div class="card-header"><h3>&#128230; Cargar Nuevo Pedido</h3></div><div class="card-body">
 <form id="formClientePedido" onsubmit="return savePedidoCliente(event)">
 <div class="form-grid">
-<div class="form-group full-width"><label>Tienda *</label><select id="cTienda"><option value="">Seleccionar...</option></select></div>
+<div class="form-group full-width" id="cTiendaGroup"><label>Tienda *</label><select id="cTienda"><option value="">Seleccionar...</option></select></div>
+<div class="form-group full-width"><div class="info-box" id="cOrigenInfo"></div></div>
 <div class="form-group"><label>Tu nombre *</label><input type="text" id="cCliente"></div>
-<div class="form-group"><label>Teléfono *</label><input type="text" id="cTelefono"></div>
+<div class="form-group"><label>Tel&#233;fono *</label><input type="text" id="cTelefono"></div>
 <div class="form-group"><label>Ciudad destino *</label><select id="cCiudad"></select></div>
-<div class="form-group"><label>Monto a cobrar *</label><div class="money-input-wrapper"><input type="text" id="cMonto" class="money-input" inputmode="numeric" placeholder="0"></div></div>
-<div class="form-group full-width"><label>Link Google Maps de entrega 🗺️ *</label><input type="text" id="cDirEntrega" placeholder="https://maps.app.goo.gl/..." oninput="validarMapsInput('cDirEntrega','errCDirEntrega','cEntregaInfo')"><div class="error-message" id="errCDirEntrega">⚠️ Link de Google Maps (obligatorio)</div><div class="info-box" id="cEntregaInfo"></div></div>
-<div class="form-group"><label>Método de pago</label><select id="cMetodo"><option>Efectivo</option><option>Transferencia</option><option>Solo Entrega</option></select></div>
-<div class="form-group"><label>⏰ Rango Horario</label><div id="cVentanaRango" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div><input type="hidden" id="cVentana"><div class="info-box" id="cVentanaInfo"></div></div>
+<div class="form-group"><label>Monto a cobrar *</label><div class="money-input-wrapper"><input type="text" id="cMonto" class="money-input" inputmode="numeric" placeholder="0"></div><div class="info-box" id="cMontoInfo"></div></div>
+<div class="form-group full-width"><label>Link Google Maps de entrega &#128205; *</label><input type="text" id="cDirEntrega" placeholder="https://maps.app.goo.gl/..." oninput="validarMapsInput('cDirEntrega','errCDirEntrega','cEntregaInfo')"><div class="error-message" id="errCDirEntrega">&#128205; Link de Google Maps (obligatorio)</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button type="button" class="btn btn-maps btn-xs" onclick="sugerirLinkMapsCliente()">&#128269; Buscar la direcci&#243;n en Google Maps</button><button type="button" class="btn btn-secondary btn-xs" onclick="usarLinkMapsClienteRegistrado()">&#128204; Usar mi ubicaci&#243;n registrada</button></div><div class="info-box" id="cEntregaInfo"></div></div>
+<div class="form-group"><label>M&#233;todo de pago</label><select id="cMetodo" onchange="onClienteMetodoChange()"><option>Efectivo</option><option>Transferencia</option><option>Solo Entrega</option></select></div>
+<div class="form-group"><label>&#128337; Rango Horario *</label><div id="cVentanaRango" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div><input type="hidden" id="cVentana"><div class="error-message" id="errCVentana">Eleg&#237; el rango horario de entrega</div><div class="info-box" id="cVentanaInfo"></div></div>
 <div class="form-group full-width"><label>Observaciones</label><textarea id="cObs" rows="2"></textarea></div>
 </div>
-<button type="submit" class="btn btn-primary" style="width:100%;margin-top:16px">💾 Enviar Pedido</button>
+<button type="submit" class="btn btn-primary" style="width:100%;margin-top:16px">&#128228; Enviar Pedido</button>
 </form></div></div>
-<div style="text-align:center;margin:12px 0"><button class="btn btn-warning" onclick="abrirTarifasCliente()">💲 Consultar Tarifas</button></div>
-<div class="card"><div class="card-header"><h3>📋 Mis Pedidos</h3></div><div class="card-body" id="clientPedidosList"></div></div>
+<div class="card"><div class="card-header"><h3>&#128230; Mis Pedidos</h3></div><div class="card-body" id="clientPedidosList"></div></div>
 </div>
-<div class="delivery-bottom-nav"><button class="nav-btn active">📦 Pedidos</button><button class="nav-btn" onclick="doLogout()">🚪 Salir</button></div>
+<div id="clientPaneRendicion" style="display:none;padding:0 16px 20px">
+<div class="card"><div class="card-header"><h3>&#128202; Rendici&#243;n de todas mis entregas</h3></div><div class="card-body" id="clientRendicionBody"></div></div>
 </div>
-<div class="delivery-app" id="tiendaApp">
+<div class="delivery-bottom-nav"><button class="nav-btn active">&#128230; Pedidos</button><button class="nav-btn" onclick="doLogout()">&#128682; Salir</button></div>
+</div>id="tiendaApp">
 <div class="delivery-header"><h2>🏪 JAGI Y ZOE - Mi Tienda</h2><p id="tiendaWelcome"></p></div>
 <div style="padding:16px;padding-bottom:110px">
 <div class="delivery-stats">
@@ -1586,7 +1596,7 @@ const rendObj={};(state.Rendiciones||[]).forEach(function(r){const row=normalize
 const asistObj={};(state.Asistencia||[]).forEach(function(r){const row=normalizeRow('asistencia',r);if(!row.userId||!row.fecha)return;asistObj[row.userId]=asistObj[row.userId]||{};asistObj[row.userId][row.fecha]=row;});
 const liveObj={};(state.Live||[]).forEach(function(r){const row=normalizeRow('live',r);if(!row.userId||!row.fecha)return;liveObj[row.userId]=liveObj[row.userId]||{};liveObj[row.userId][row.fecha]=row;});
 newState.users.forEach(function(u){u.role=mapearRolSheets(u.role||u.rol||'delivery');u.sueldoMensual=Number(u.sueldoMensual||u.jornal||0);u.jornal=u.sueldoMensual;u.estado=u.estado||'Activo';u.telefono=String(u.telefono||'');u.cedula=String(u.cedula||'');u.fechaIngreso=u.fechaIngreso||'';if(!u.id&&u.email)u.id=normEmail(u.email);});
-newState.pedidos.forEach(function(p){p.monto=Number(p.monto)||0;p.costo=Number(p.costo)||0;p.montoCobrado=Number(p.montoCobrado)||0;p.verificado=!!p.verificado;p.retirado=!!p.retirado;p.ventana=p.ventana||'';p.obs=p.obs||'';p.motivo=p.motivo||'';p.dirEntrega=p.dirEntrega||'';p.dirRetiro=p.dirRetiro||'';p.horaRetiro=p.horaRetiro||'';p.horaInicioRuta=p.horaInicioRuta||'';p.entregadoTs=Number(p.entregadoTs)||0;p.estadoPago=p.estado==='Entregado'?(p.estadoPago||'Pendiente a Pagar'):(p.estadoPago||'');p.comprobante=p.comprobante||'';p.comprobanteNombre=p.comprobanteNombre||'';p.comprobanteTs=Number(p.comprobanteTs)||0;p.cuentaDestino=p.cuentaDestino||'';p.pagoA=(p.pagoA==='tienda'||p.pagoA==='zoe')?p.pagoA:'';p.pagoATs=Number(p.pagoATs)||0;p.rendDeliveryCero=(p.rendDeliveryCero===true||p.rendDeliveryCero==='true'||p.rendDeliveryCero===1);p.rendTiendaCero=(p.rendTiendaCero===true||p.rendTiendaCero==='true'||p.rendTiendaCero===1);p.comprobanteVerificado=(p.comprobanteVerificado===true||p.comprobanteVerificado==='true'||p.comprobanteVerificado===1);p.notificadoTienda=!!p.notificadoTienda;p.fechaReagendado=p.fechaReagendado||'';p.capturaReagendado=p.capturaReagendado||'';p.reagendadoPor=p.reagendadoPor||'';p.dijoCliente=p.dijoCliente||'';p.canceladoPor=p.canceladoPor||'';p.canceladoRol=p.canceladoRol||'';p.canceladoTs=Number(p.canceladoTs)||0;p.horaCancelado=p.horaCancelado||'';p.avisarTiendaCancel=!!p.avisarTiendaCancel;p.avisarClienteCancel=!!p.avisarClienteCancel;p.cancelAvisoTiendaTs=Number(p.cancelAvisoTiendaTs)||0;p.cancelAvisoClienteTs=Number(p.cancelAvisoClienteTs)||0;p.ruteadorId=p.ruteadorId||'';p.asignTs=Number(p.asignTs)||0;p.verificadoTs=Number(p.verificadoTs)||0;p.retiradoTs=Number(p.retiradoTs)||0;p.rutaTs=Number(p.rutaTs)||0;p.ventana=normalizarVentana(p.ventana);
+newState.pedidos.forEach(function(p){p.monto=Number(p.monto)||0;p.costo=Number(p.costo)||0;p.montoCobrado=Number(p.montoCobrado)||0;p.verificado=!!p.verificado;p.retirado=!!p.retirado;p.ventana=p.ventana||'';p.obs=p.obs||'';p.motivo=p.motivo||'';p.dirEntrega=p.dirEntrega||'';p.dirRetiro=p.dirRetiro||'';p.horaRetiro=p.horaRetiro||'';p.horaInicioRuta=p.horaInicioRuta||'';p.entregadoTs=Number(p.entregadoTs)||0;p.estadoPago=p.estado==='Entregado'?(p.estadoPago||'Pendiente a Pagar'):(p.estadoPago||'');p.comprobante=p.comprobante||'';p.comprobanteNombre=p.comprobanteNombre||'';p.comprobanteTs=Number(p.comprobanteTs)||0;p.cuentaDestino=p.cuentaDestino||'';p.pagoA=(p.pagoA==='tienda'||p.pagoA==='zoe')?p.pagoA:'';p.pagoATs=Number(p.pagoATs)||0;p.rendDeliveryCero=(p.rendDeliveryCero===true||p.rendDeliveryCero==='true'||p.rendDeliveryCero===1);p.rendTiendaCero=(p.rendTiendaCero===true||p.rendTiendaCero==='true'||p.rendTiendaCero===1);p.comprobanteVerificado=(p.comprobanteVerificado===true||p.comprobanteVerificado==='true'||p.comprobanteVerificado===1);p.notificadoTienda=!!p.notificadoTienda;p.fechaReagendado=p.fechaReagendado||'';p.capturaReagendado=p.capturaReagendado||'';p.reagendadoPor=p.reagendadoPor||'';p.dijoCliente=p.dijoCliente||'';p.canceladoPor=p.canceladoPor||'';p.canceladoRol=p.canceladoRol||'';p.canceladoTs=Number(p.canceladoTs)||0;p.horaCancelado=p.horaCancelado||'';p.avisarTiendaCancel=!!p.avisarTiendaCancel;p.avisarClienteCancel=!!p.avisarClienteCancel;p.cancelAvisoTiendaTs=Number(p.cancelAvisoTiendaTs)||0;p.cancelAvisoClienteTs=Number(p.cancelAvisoClienteTs)||0;p.ruteadorId=p.ruteadorId||'';p.metodoSolicitado=p.metodoSolicitado||'';p.cambioMetodoTs=Number(p.cambioMetodoTs)||0;p.cambioMetodoNota=p.cambioMetodoNota||'';p.asignTs=Number(p.asignTs)||0;p.verificadoTs=Number(p.verificadoTs)||0;p.retiradoTs=Number(p.retiradoTs)||0;p.rutaTs=Number(p.rutaTs)||0;p.ventana=normalizarVentana(p.ventana);
 const loc=oldPedidosMap[p.id];
 if(loc){
 if(loc.notificadoTienda===true&&!p.notificadoTienda)p.notificadoTienda=true;
@@ -1813,7 +1823,7 @@ function openNotificaciones(){renderNotifList();openModal('modalNotificaciones')
 function renderNotifList(){const db=getDB();const notifs=(db.notifications||[]).filter(function(x){if(!currentUser)return false;if(currentUser.role==='admin'||currentUser.role==='dueño'){if(['retirado','entregado','reagendado'].indexOf(x.type)>=0&&x.ruteadorId)return false;}else if(currentUser.role==='ruteador'){if(x.ruteadorId&&x.ruteadorId!==currentUser.id)return false;}else if(currentUser.role==='delivery'){/* cada delivery ve solo sus avisos (y los generales). La hoja
    Notificaciones NO tiene columna deliveryId, asi que cuando el aviso viene de un pedido
    el destinatario se deduce del propio pedido. */
-if(x.deliveryId&&x.deliveryId!==currentUser.id)return false;if(x.type==='nuevo_pedido_delivery'&&x.pedidoId){const _pd=(db.pedidos||[]).find(function(y){return y.id===x.pedidoId;});if(_pd&&_pd.deliveryId&&_pd.deliveryId!==currentUser.id)return false;}}return true;}).slice().sort(function(a,b){return b.ts-a.ts;});const icons={retirado:'📦',entregado:'✅',cancelado:'❌',reagendado:'📅',comprobante:'💳',nuevo_pedido_cliente:'🛍️',nuevo_pedido_delivery:'🛍️'};document.getElementById('notifList').innerHTML=notifs.length?notifs.map(function(n){let extra='';if(n.type==='nuevo_pedido_delivery'){extra=`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-xs btn-secondary" onclick="verDetallePedido('${n.pedidoId}')">🔍 Ver detalle</button></div>`;}else if(n.type==='nuevo_pedido_cliente'){extra=`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-xs btn-secondary" onclick="verDetallePedidoCliente('${n.pedidoId}')">🔍 Ver detalles</button><button class="btn btn-xs btn-success" onclick="aceptarPedidoCliente('${n.pedidoId}')">✅ Aceptar</button><button class="btn btn-xs btn-danger" onclick="rechazarPedidoCliente('${n.pedidoId}')">❌ Rechazar</button></div>`;}else if(n.type==='nueva_usuario_cliente'){{extra=`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-xs btn-success" onclick="closeModal('modalNotificaciones');aprobarUsuario('${n.pedidoId}')">✅ Aprobar</button><button class="btn btn-xs btn-danger" onclick="closeModal('modalNotificaciones');rechazarUsuario('${n.pedidoId}')">❌ Rechazar</button></div>`;}}else if(n.type==='solicitud_rendicion'){extra=`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-xs btn-success" onclick="aprobarSolicitudTienda('${n.id}')">✅ Aprobar</button><button class="btn btn-xs btn-danger" onclick="rechazarSolicitudTienda('${n.id}')">❌ Rechazar</button></div>`;}else if(n.type==='comprobante'){const p=db.pedidos.find(function(x){return x.id===n.pedidoId;});extra=`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-xs btn-primary" onclick="closeModal('modalNotificaciones');openComprobanteModal('${n.pedidoId}')">💳 Revisar URGENTE</button>${p&&p.comprobante?`<a class="btn btn-xs btn-secondary" href="${p.comprobante}" target="_blank" rel="noopener">📎 Ver comprobante</a>`:''}</div>`;}return `<div class="notif-item ${n.read?'':'unread'} ${n.type==='comprobante'?'priority':''}"><div class="notif-icon">${icons[n.type]||'🔔'}</div><div class="notif-text">${n.message}${extra}<div class="notif-time">${fmtAgo(n.ts)} · ${new Date(n.ts).toLocaleTimeString('es-PY')}</div></div></div>`;}).join(''):'<div class="empty-state"><div class="empty-icon">🔔</div><p>Sin notificaciones</p></div>';}
+if(x.deliveryId&&x.deliveryId!==currentUser.id)return false;if(x.type==='nuevo_pedido_delivery'&&x.pedidoId){const _pd=(db.pedidos||[]).find(function(y){return y.id===x.pedidoId;});if(_pd&&_pd.deliveryId&&_pd.deliveryId!==currentUser.id)return false;}}return true;}).slice().sort(function(a,b){return b.ts-a.ts;});const icons={retirado:'📦',entregado:'✅',cancelado:'❌',reagendado:'📅',comprobante:'💳',nuevo_pedido_cliente:'🛍️',nuevo_pedido_delivery:'🛍️'};document.getElementById('notifList').innerHTML=notifs.length?notifs.map(function(n){let extra=extraNotificacion(n);if(n.type==='nuevo_pedido_delivery'){extra=`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-xs btn-secondary" onclick="verDetallePedido('${n.pedidoId}')">🔍 Ver detalle</button></div>`;}else if(n.type==='nuevo_pedido_cliente'){extra=`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-xs btn-secondary" onclick="verDetallePedidoCliente('${n.pedidoId}')">🔍 Ver detalles</button><button class="btn btn-xs btn-success" onclick="aceptarPedidoCliente('${n.pedidoId}')">✅ Aceptar</button><button class="btn btn-xs btn-danger" onclick="rechazarPedidoCliente('${n.pedidoId}')">❌ Rechazar</button></div>`;}else if(n.type==='nueva_usuario_cliente'){{extra=`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-xs btn-success" onclick="closeModal('modalNotificaciones');aprobarUsuario('${n.pedidoId}')">✅ Aprobar</button><button class="btn btn-xs btn-danger" onclick="closeModal('modalNotificaciones');rechazarUsuario('${n.pedidoId}')">❌ Rechazar</button></div>`;}}else if(n.type==='solicitud_rendicion'){extra=`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-xs btn-success" onclick="aprobarSolicitudTienda('${n.id}')">✅ Aprobar</button><button class="btn btn-xs btn-danger" onclick="rechazarSolicitudTienda('${n.id}')">❌ Rechazar</button></div>`;}else if(n.type==='comprobante'){const p=db.pedidos.find(function(x){return x.id===n.pedidoId;});extra=`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-xs btn-primary" onclick="closeModal('modalNotificaciones');openComprobanteModal('${n.pedidoId}')">💳 Revisar URGENTE</button>${p&&p.comprobante?`<a class="btn btn-xs btn-secondary" href="${p.comprobante}" target="_blank" rel="noopener">📎 Ver comprobante</a>`:''}</div>`;}return `<div class="notif-item ${n.read?'':'unread'} ${n.type==='comprobante'?'priority':''}"><div class="notif-icon">${icons[n.type]||'🔔'}</div><div class="notif-text">${n.message}${extra}<div class="notif-time">${fmtAgo(n.ts)} · ${new Date(n.ts).toLocaleTimeString('es-PY')}</div></div></div>`;}).join(''):'<div class="empty-state"><div class="empty-icon">🔔</div><p>Sin notificaciones</p></div>';}
 function marcarTodasLeidas(){const db=getDB();(db.notifications||[]).forEach(function(n){if(n.read)return;n.read=true;opUpsert('Notificaciones',n.id,n);});saveDB(db);_lastNotifCount=0;renderNotifBadge();renderNotifList();showToast('Notificaciones marcadas como leídas','success');}
 // ===== LOGIN ROBUSTO (SOLUCIÓN DEFINITIVA) =====
 function mapearRolSheets(rolCrudo){const r=normKey(rolCrudo||'');if(['admin','administracion','administración','jefe','gerente'].indexOf(r)>=0)return 'admin';if(['dueno','dueño','dueÃ±o','owner','propietario'].indexOf(r)>=0)return 'dueño';if(['ruteador','ruteadora','mapa','planificador','routing'].indexOf(r)>=0)return 'ruteador';if(['cliente','customer','cliente_final'].indexOf(r)>=0)return 'cliente';if(['tienda','local','comercio'].indexOf(r)>=0)return 'tienda';if(['delivery','motorizado','moto','repartidor','courier','driver'].indexOf(r)>=0)return 'delivery';return 'delivery';}
@@ -3007,8 +3017,33 @@ function safeHtml(s){return String(s==null?'':s).replace(/[<>&"]/g,'');}
 /* ========== ZOE v6 · CLIENTES: registro + carga de pedidos + aprobación ========== */
 let _pubTipoRegistro='tienda';
 function abrirModalRegistroPublico(){_pubTipoRegistro='tienda';const n=document.getElementById('pubNombre'),tn=document.getElementById('pubTiendaNombre');if(tn&&n)tn.value='';onRegistroTipoChange('tienda');openModal('modalRegistroPublico');}
-function onRegistroTipoChange(tipo){if(tipo)_pubTipoRegistro=tipo;const bt=document.getElementById('btnTipoTienda'),bc=document.getElementById('btnTipoCliente'),f=document.getElementById('pubTiendaFields');if(bt)bt.classList.toggle('active',_pubTipoRegistro==='tienda');if(bc)bc.classList.toggle('active',_pubTipoRegistro==='cliente');if(f)f.classList.toggle('hidden',_pubTipoRegistro!=='tienda');if(_pubTipoRegistro==='tienda'){const n=document.getElementById('pubNombre'),tn=document.getElementById('pubTiendaNombre');if(tn&&n&&!tn.value.trim())tn.value=n.value.trim();}}
-function registrarPublico(){
+function onRegistroTipoChange(tipo){
+  if(tipo)_pubTipoRegistro=tipo;
+  const bt=document.getElementById('btnTipoTienda');
+  const bc=document.getElementById('btnTipoCliente');
+  const f=document.getElementById('pubTiendaFields');
+  if(bt)bt.classList.toggle('active',_pubTipoRegistro==='tienda');
+  if(bc)bc.classList.toggle('active',_pubTipoRegistro==='cliente');
+  /* La ubicación de retiro se pide para los DOS tipos: es la que después evita
+     tener que elegir tienda en cada pedido. */
+  if(f)f.classList.remove('hidden');
+  const esTienda=_pubTipoRegistro==='tienda';
+  const ln=document.getElementById('lblPubTiendaNombre');
+  const ld=document.getElementById('lblPubTiendaDir');
+  const li=document.getElementById('pubUbicInfo');
+  if(ln)ln.textContent=esTienda?'Nombre comercial de la Tienda':'Tu nombre o alias *';
+  if(ld)ld.textContent=esTienda?'📍 Ubicación de Retiro de Pedidos *':'📍 Dirección de donde se retiran TUS pedidos *';
+  if(li)li.innerHTML=esTienda
+    ? '📍 Esta ubicación es donde el delivery va a <strong>retirar los pedidos</strong>. <strong>No tenés que elegir tienda: tu usuario ya ES la tienda.</strong>'
+    : '📍 Esta es tu ubicación de retiro. <strong>Cada vez que cargues un pedido ya no vas a elegir tienda</strong>: se toma sola de acá. Abajo siempre se muestra tu nombre como <strong>cliente final</strong>.';
+  const ph=document.getElementById('pubTiendaDireccion');
+  if(ph)ph.placeholder=esTienda?'Dirección de la tienda donde se retiran los pedidos':'Dirección de donde se retiran tus pedidos';
+  if(esTienda){
+    const n=document.getElementById('pubNombre');
+    const tn=document.getElementById('pubTiendaNombre');
+    if(tn&&n&&!tn.value.trim())tn.value=n.value.trim();
+  }
+}function registrarPublico(){
   const nombre=(document.getElementById('pubNombre')||{}).value?.trim()||'';
   const emailRaw=(document.getElementById('pubEmail')||{}).value||'';
   const email=normEmail(emailRaw);
@@ -3019,33 +3054,39 @@ function registrarPublico(){
   if(!email||email.indexOf('@')<1){document.getElementById('pubEmail').classList.add('error-field');showToast('Ingresá un email válido','error');return;}
   if(!telefono){document.getElementById('pubTelefono').classList.add('error-field');showToast('Ingresá tu teléfono','error');return;}
   if(!pass){document.getElementById('pubPass').classList.add('error-field');showToast('Ingresá una contraseña','error');return;}
+  /* La ubicación de retiro se pide SIEMPRE, tanto a la tienda como al cliente
+     final: es lo que después permite que el pedido no tenga que elegir tienda. */
+  const esTienda=_pubTipoRegistro==='tienda';
+  const quien=esTienda?'la tienda':'tu casa / local';
   let tNombre='',tCiudad='',tDireccion='',tSel='';
-  if(_pubTipoRegistro==='tienda'){
-    tNombre=((document.getElementById('pubTiendaNombre')||{}).value||'').trim()||nombre;
-    tCiudad=(document.getElementById('pubTiendaCiudad')||{}).value||'';
-    tDireccion=((document.getElementById('pubTiendaDireccion')||{}).value||'').trim();
-    tSel=((document.getElementById('pubTiendaUrlMaps')||{}).value||'').trim();
-    if(!tCiudad){document.getElementById('pubTiendaCiudad').classList.add('error-field');showToast('Elegí la ciudad de la tienda','error');return;}
-    if(!tDireccion){const _d=document.getElementById('pubTiendaDireccion');if(_d){_d.classList.add('error-field');_d.focus();}showToast('📍 Ingresá la ubicación de retiro de pedidos','error');return;}
-    if(!tSel){validarMapsInput('pubTiendaUrlMaps','errPubTiendaUrlMaps','pubTiendaMapsInfo');const _e=document.getElementById('errPubTiendaUrlMaps');if(_e)_e.classList.add('visible');const _i=document.getElementById('pubTiendaUrlMaps');if(_i){_i.classList.add('error-field');_i.focus();}showToast('🗺️ El link de Google Maps del retiro es obligatorio','error');return;}
-    if(!isGoogleMapsUrl(tSel)){validarMapsInput('pubTiendaUrlMaps','errPubTiendaUrlMaps','pubTiendaMapsInfo');const _e2=document.getElementById('errPubTiendaUrlMaps');if(_e2)_e2.classList.add('visible');const _i2=document.getElementById('pubTiendaUrlMaps');if(_i2){_i2.classList.add('error-field');_i2.focus();}showToast('⚠️ Solo se permiten links de GOOGLE MAPS','error');return;}
-    tSel=normalizeMapsUrl(tSel);
+  tNombre=((document.getElementById('pubTiendaNombre')||{}).value||'').trim()||nombre;
+  tCiudad=(document.getElementById('pubTiendaCiudad')||{}).value||'';
+  tDireccion=((document.getElementById('pubTiendaDireccion')||{}).value||'').trim();
+  tSel=((document.getElementById('pubTiendaUrlMaps')||{}).value||'').trim();
+  if(!tCiudad){document.getElementById('pubTiendaCiudad').classList.add('error-field');showToast('Elegí la ciudad de '+quien,'error');return;}
+  if(!tDireccion){const _d=document.getElementById('pubTiendaDireccion');if(_d){_d.classList.add('error-field');_d.focus();}showToast('📍 Ingresá la ubicación de retiro de los pedidos','error');return;}
+  if(!tSel||!isGoogleMapsUrl(tSel)){
+    validarMapsInput('pubTiendaUrlMaps','errPubTiendaUrlMaps','pubTiendaMapsInfo');
+    const _e=document.getElementById('errPubTiendaUrlMaps');if(_e)_e.classList.add('visible');
+    const _i=document.getElementById('pubTiendaUrlMaps');if(_i){_i.classList.add('error-field');_i.focus();}
+    showToast(tSel?'⚠️ Solo se permiten links de GOOGLE MAPS':'🗺️ El link de Google Maps del retiro es obligatorio','error');
+    return;
   }
+  tSel=normalizeMapsUrl(tSel);
   const db=getDB();
   if((db.users||[]).find(function(u){return normEmail(u.email||u.id||'')===email;})){showToast('Ya existe un usuario con ese email','error');return;}
-  const rolFinal=_pubTipoRegistro==='tienda'?'tienda':'cliente';
+  const rolFinal=esTienda?'tienda':'cliente';
   const u={id:email,name:nombre,email:email,role:rolFinal,cedula:'',sueldoMensual:0,jornal:0,fechaIngreso:hoyLocal(),telefono:telefono,estado:'Pendiente',password:pass};
-  if(rolFinal==='tienda'){
-    const tid='t'+Date.now();
-    const tienda={id:tid,nombre:tNombre,contacto:nombre,telefono:telefono,ciudad:tCiudad,direccion:tDireccion,urlMaps:tSel,email:email};
-    db.tiendas=db.tiendas||[];db.tiendas.push(tienda);u.tiendaId=tid;opUpsert('Tiendas',tienda.id,tienda);
-  }
+  /* Tanto la tienda como el cliente final quedan como ORIGEN de sus pedidos:
+     se les crea su fila en Tiendas y el usuario apunta a ella con tiendaId. */
+  const tid='t'+Date.now()+Math.random().toString(16).slice(2,6);
+  const tienda={id:tid,nombre:tNombre,contacto:nombre,telefono:telefono,ciudad:tCiudad,direccion:tDireccion,urlMaps:tSel,email:email};
+  db.tiendas=db.tiendas||[];db.tiendas.push(tienda);u.tiendaId=tid;opUpsert('Tiendas',tienda.id,tienda);
   db.users.push(u);saveDB(db);opUpsert('Usuarios',u.id,u);syncYa();
   try{addNotification(rolFinal==='tienda'?'nueva_tienda':'nueva_usuario_cliente',u);}catch(e){}
   closeModal('modalRegistroPublico');
-  showToast(rolFinal==='tienda'?'✅ Tienda registrada. Esperá la aprobación de Administración.':'✅ Cuenta creada. Esperá la aprobación de Administración.','success');
-}
-function esRolTienda(rol){const r=normKey(rol||'');return ['tienda','local','comercio','store','shop'].indexOf(r)>=0;}
+  showToast(rolFinal==='tienda'?'✅ Tienda registrada. Esperá la aprobación de Administración.':'✅ Cuenta creada con tu ubicación. Esperá la aprobación de Administración.','success');
+}function esRolTienda(rol){const r=normKey(rol||'');return ['tienda','local','comercio','store','shop'].indexOf(r)>=0;}
 function aplicarAppSegunRol(){
   const c=document.getElementById('appContainer'),d=document.getElementById('deliveryApp'),t=document.getElementById('tiendaApp'),cl=document.getElementById('clientApp');
   if(c)c.classList.remove('active');
@@ -3096,45 +3137,159 @@ function renderClientApp(){
   if(!currentUser||currentUser.role!=='cliente')return;
   document.getElementById('clientWelcome').textContent='Hola, '+currentUser.name+' · '+hoyLocal();
   var db=getDB();
+  var ubi=ubicacionPropiaCliente();
+  var propia=ubi.tienda;
+  var conUbic=tieneUbicacionPropiaCliente();
+
+  /* --- Origen del pedido: si el cliente ya registró su ubicacion, el mismo es
+     la tienda y NO tiene que elegirla en cada pedido. --- */
+  var gT=document.getElementById('cTiendaGroup');
   var selT=document.getElementById('cTienda');
-  if(selT){var cur=selT.value;selT.innerHTML='<option value="">Seleccionar...</option>'+(db.tiendas||[]).map(function(t){return '<option value="'+t.id+'">'+t.nombre+' ('+t.ciudad+')</option>';}).join('');selT.value=cur;}
+  var oi=document.getElementById('cOrigenInfo');
+  if(selT){
+    if(conUbic&&propia){
+      if(gT)gT.classList.add('hidden');
+      var wa=normalizeMapsUrl(ubi.urlMaps);
+      oi.innerHTML='<div style="font-weight:700">🏪 Origen de tus pedidos: '+safeText(propia.nombre||currentUser.name)+'</div>'
+        +'<div>🏙️ Ciudad: '+safeText(ubi.ciudad)+'</div>'
+        +(ubi.direccion?'<div>📍 '+safeText(ubi.direccion)+'</div>':'')
+        +'<div><a href="'+wa+'" target="_blank" rel="noopener">🔗 Ver en Google Maps</a></div>'
+        +'<div style="margin-top:6px;font-weight:700">👤 Cliente final: '+safeText(currentUser.name)+'</div>'
+        +'<div>📞 '+safeText(currentUser.telefono||'')+'</div>';
+    }else{
+      if(gT)gT.classList.remove('hidden');
+      var cur=selT.value;
+      selT.innerHTML='<option value="">Seleccionar...</option>'+(db.tiendas||[]).map(function(t){
+        return '<option value="'+t.id+'">'+safeText(t.nombre)+' ('+safeText(t.ciudad||'')+')</option>';
+      }).join('');
+      if(cur)selT.value=cur;
+      oi.innerHTML='<div style="color:var(--danger);font-weight:700">⚠️ Todavía no tenés registrada tu ubicación de retiro</div>'
+        +'<div>Registrala una vez y después tus pedidos ya no te van a pedir elegir tienda.</div>'
+        +'<button type="button" class="btn btn-primary btn-xs" style="margin-top:8px" onclick="abrirDatosCliente()">📍 Registrar mi ubicación ahora</button>';
+    }
+  }
   var selC=document.getElementById('cCiudad');
-  if(selC&&!selC.options.length){selC.innerHTML='<option value="">Seleccionar...</option>'+CIUDADES.map(function(c){return '<option>'+c+'</option>';}).join('');}
+  if(selC&&!selC.options.length){
+    selC.innerHTML='<option value="">Seleccionar...</option>'+CIUDADES.map(function(c){return '<option>'+safeText(c)+'</option>';}).join('');
+  }
   setupAllMoneyInputs();
   poblarVentanaRango('c','');
+  var eN=document.getElementById('cCliente');
+  var eT=document.getElementById('cTelefono');
+  if(eN&&!eN.value.trim())eN.value=currentUser.name||'';
+  if(eT&&!eT.value.trim())eT.value=currentUser.telefono||'';
+  var eV=document.getElementById('errCVentana');
+  if(eV)eV.classList.remove('visible');
+  onClienteMetodoChange();
+  renderClienteDatos();
+
+  /* --- Mis pedidos: con rango horario (antes no se veia) --- */
   var mis=(db.pedidos||[]).filter(function(p){return p.clienteEmail===currentUser.id||p.telefono===currentUser.telefono;}).sort(function(a,b){return b.id.localeCompare(a.id);});
-  document.getElementById('clientPedidosList').innerHTML=mis.length?mis.map(function(p){return '<div class="delivery-card" style="margin-bottom:10px"><div class="dc-id">'+p.id+' '+badgeEstado(p.estado)+'</div><div>🏪 '+safeText(p.tienda)+' → 📍 '+safeText(p.ciudad)+'</div><div>💰 '+formatGs(p.monto)+' · '+safeText(p.metodo)+'</div>'+(p.motivo?'<div style="color:var(--danger)">📝 '+safeText(p.motivo)+'</div>':'')+(p.dijoCliente?'<div style="color:var(--danger);font-style:italic">🗣️ “'+safeText(p.dijoCliente)+'”</div>':'')+'</div>';}).join(''):'<div class="empty-state"><p>Aún no cargaste pedidos.</p></div>';
-}
-function savePedidoCliente(e){
+  var lista=document.getElementById('clientPedidosList');
+  if(lista){
+    lista.innerHTML=mis.length?mis.map(function(p){
+      var urls='';
+      var ur=getMapsUrlRetiro(p),ue=getMapsUrlEntrega(p);
+      if(ur)urls+='<a href="'+ur+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs">🗺️ Google Maps Retiro</a> ';
+      if(ue)urls+='<a href="'+ue+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs">📍 Google Maps Entrega</a> ';
+      return '<div class="delivery-card" style="margin-bottom:10px">'
+        +'<div class="dc-id">'+p.id+' '+badgeEstado(p.estado)+'</div>'
+        +'<div>🏪 '+safeText(p.tienda)+' → 📍 '+safeText(p.ciudad)+'</div>'
+        +'<div>💰 '+formatGs(p.monto)+' · '+safeText(p.metodo)+'</div>'
+        +'<div>🕐 Horario: '+(p.ventana?safeText(p.ventana):'Todo el día')+'</div>'
+        +(p.motivo?'<div style="color:var(--danger)">📝 '+safeText(p.motivo)+'</div>':'')
+        +(p.dijoCliente?'<div style="color:var(--danger);font-style:italic">🗣️ "'+safeText(p.dijoCliente)+'"</div>':'')
+        +'<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">'
+        +'<button class="btn btn-xs btn-secondary" onclick="verDetallePedidoCliente(\''+p.id+'\')">🔍 Ver detalle</button>'
+        +botonesCambioMetodoCliente(p)+'</div>'
+        +(urls?'<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">'+urls+'</div>':'')
+        +'</div>';
+    }).join(''):'<div class="empty-state"><p>Aún no cargaste pedidos.</p></div>';
+  }
+  /* Se reaplica la pestaña actual: un refresh por sincronización no debe
+     botar al cliente fuera de la Rendición si estaba ahí. */
+  clientTab(_clientTab);
+}function savePedidoCliente(e){
   if(e)e.preventDefault();
   var db=getDB();
-  var tiendaId=document.getElementById('cTienda').value;
-  var cliente=document.getElementById('cCliente').value.trim()||currentUser.name;
-  var telefono=document.getElementById('cTelefono').value.trim()||currentUser.telefono;
+  var propia=tiendaDeClienteActual();
+  var conUbic=tieneUbicacionPropiaCliente();
+  /* Con la ubicación registrada el origen es el mismo cliente: no se elige
+     tienda en cada pedido. Sin ella se cae al selector, como antes. */
+  var tiendaId=(conUbic&&propia)?propia.id:(document.getElementById('cTienda')||{}).value;
+  var cliente=(document.getElementById('cCliente').value||'').trim()||currentUser.name;
+  var telefono=(document.getElementById('cTelefono').value||'').trim()||currentUser.telefono;
   var ciudad=document.getElementById('cCiudad').value;
   var dirEntrega=document.getElementById('cDirEntrega').value.trim();
   var monto=getMoneyValue('cMonto');
   var metodo=document.getElementById('cMetodo').value;
-  var obs=document.getElementById('cObs').value.trim();var ventana=normalizarVentana(document.getElementById('cVentana').value);
-  if(!tiendaId||!ciudad){showToast('Completá la tienda y la ciudad','error');return false;}
+  var obs=document.getElementById('cObs').value.trim();
+  var ventana=normalizarVentana(document.getElementById('cVentana').value);
+  if(!tiendaId){
+    showToast(conUbic?'No encontré tu ubicación registrada':'Elegí la tienda',"error");
+    if(!conUbic)abrirDatosCliente();
+    return false;
+  }
+  if(!ciudad){showToast('Elegí la ciudad de destino','error');return false;}
+  if(!ventana){
+    var _ve=document.getElementById('errCVentana');
+    if(_ve)_ve.classList.add('visible');
+    showToast('🕐 Elegí el rango horario de entrega','error');
+    return false;
+  }
   if(!dirEntrega){showToast('Pegá el link de Google Maps de la entrega','error');return false;}
   if(!isGoogleMapsUrl(dirEntrega)){showToast('La entrega debe ser un LINK de GOOGLE MAPS (no Waze ni dirección escrita)','error');return false;}
-  if(monto<=0&&metodo!=='Solo Entrega'){showToast('Ingresá el monto','error');return false;}
+  /* Solo Entrega = servicio de envío nada más: el monto queda en 0. */
   if(metodo==='Solo Entrega')monto=0;
+  else if(monto<=0){showToast('Ingresá el monto a cobrar','error');return false;}
   var tienda=db.tiendas.find(function(t){return t.id===tiendaId;});
+  if(!tienda){showToast('No se encontró la tienda de origen','error');return false;}
   var num=String(db.nextPedidoNum).padStart(3,'0');
-  var p={id:'P-'+num,fecha:hoyLocal(),tiendaId:tiendaId,tienda:tienda.nombre,telefonoTienda:tienda.telefono,urlMapsTienda:tienda.urlMaps||'',cliente:cliente,telefono:telefono,clienteEmail:currentUser.id,dirRetiro:(isGoogleMapsUrl(tienda.urlMaps)?String(tienda.urlMaps).trim():(tienda.direccion||'')),ciudadOrigen:tienda.ciudad,ciudad:ciudad,dirEntrega:normalizeMapsUrl(dirEntrega),monto:monto,costo:getTarifa(db,tienda.ciudad,ciudad),metodo:metodo,hora:new Date().toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'}),ventana:ventana,deliveryId:'',delivery:'',ruteadorId:'',estado:'Pendiente',verificado:false,horaEntrega:'',obs:obs,motivo:'',montoCobrado:0,ordenEntrega:0,retirado:false,horaRetiro:'',horaInicioRuta:'',entregadoTs:0,estadoPago:'',comprobante:'',comprobanteNombre:'',comprobanteTs:0,cuentaDestino:'',pagoA:'',pagoATs:0,rendDeliveryCero:false,rendTiendaCero:false,comprobanteVerificado:false,notificadoTienda:false,fechaReagendado:'',capturaReagendado:'',reagendadoPor:''};
+  var p={id:'P-'+num,fecha:hoyLocal(),tiendaId:tiendaId,tienda:tienda.nombre,telefonoTienda:tienda.telefono,urlMapsTienda:tienda.urlMaps||'',cliente:cliente,telefono:telefono,clienteEmail:currentUser.id,dirRetiro:(isGoogleMapsUrl(tienda.urlMaps)?String(tienda.urlMaps).trim():(tienda.direccion||'')),ciudadOrigen:tienda.ciudad,ciudad:ciudad,dirEntrega:normalizeMapsUrl(dirEntrega),monto:monto,costo:getTarifa(db,tienda.ciudad,ciudad),metodo:metodo,hora:new Date().toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'}),ventana:ventana,deliveryId:'',delivery:'',ruteadorId:'',estado:'Pendiente',verificado:false,horaEntrega:'',obs:obs,motivo:'',montoCobrado:0,ordenEntrega:0,retirado:false,horaRetiro:'',horaInicioRuta:'',entregadoTs:0,estadoPago:'',comprobante:'',comprobanteNombre:'',comprobanteTs:0,cuentaDestino:'',pagoA:'',pagoATs:0,rendDeliveryCero:false,rendTiendaCero:false,comprobanteVerificado:false,notificadoTienda:false,fechaReagendado:'',capturaReagendado:'',reagendadoPor:'',metodoSolicitado:'',cambioMetodoTs:0,cambioMetodoNota:''};
   db.pedidos.push(p);db.nextPedidoNum++;saveDB(db);opUpsert('Pedidos',p.id,p);
   addNotification('nuevo_pedido_cliente',p);
   registrarLog('pedido_cliente_creado',p.id,{clienteEmail:currentUser.id});
   publicarBeacon();
-  showToast('✅ Pedido '+p.id+' enviado. Esperá la confirmación.','success');
+  showToast('📦 Pedido '+p.id+' enviado. Esperá la confirmación.','success');
   document.getElementById('formClientePedido').reset();
+  var _cm=document.getElementById('cMonto');
+  if(_cm){_cm.dataset.montoPrevio='';_cm.readOnly=false;}
   renderClientApp();
   return false;
-}
-function verDetallePedidoCliente(pid){var db=getDB();var p=db.pedidos.find(function(x){return x.id===pid;});if(!p)return;var ex=document.getElementById('modalDetallePedidoCliente');if(ex)ex.remove();var tienda=db.tiendas.find(function(t){return t.id===p.tiendaId;})||{};var html='<div class="modal-overlay active" id="modalDetallePedidoCliente"><div class="modal" style="max-width:600px"><div class="modal-header"><h3>🔍 Detalle del Pedido '+p.id+'</h3><button class="modal-close" onclick="closeModal(\'modalDetallePedidoCliente\')">×</button></div><div class="modal-body">';html+='<div class="det-item"><span>🏪 Tienda (origen)</span><span class="det-val">'+safeText(p.tienda||tienda.nombre)+'</span></div>';html+='<div class="det-item"><span>📍 Dirección de RETIRO</span><span class="det-val">'+safeText(p.dirRetiro||tienda.direccion||'—')+'</span></div>';html+='<div class="det-item"><span>🏙️ Ciudad de origen</span><span class="det-val">'+safeText(p.ciudadOrigen||tienda.ciudad||'—')+'</span></div>';html+='<div class="det-item"><span>👤 Cliente</span><span class="det-val">'+safeText(p.cliente)+'</span></div>';html+='<div class="det-item"><span>📞 Teléfono</span><span class="det-val">'+safeText(p.telefono)+'</span></div>';html+='<div class="det-item"><span>🏙️ Ciudad destino</span><span class="det-val">'+safeText(p.ciudad)+'</span></div>';html+='<div class="det-item"><span>📍 Dirección de entrega</span><span class="det-val">'+safeText(p.dirEntrega)+'</span></div>';html+='<div class="det-item"><span>💰 Monto a cobrar</span><span class="det-val">'+formatGs(p.monto)+'</span></div>';html+='<div class="det-item"><span>💳 Método de pago</span><span class="det-val">'+safeText(p.metodo)+'</span></div>';html+='<div class="det-item"><span>🚚 Costo de envío</span><span class="det-val">'+formatGs(p.costo||0)+'</span></div>';html+='<div class="det-item"><span>📝 Observaciones</span><span class="det-val">'+safeText(p.obs||'—')+'</span></div>';html+='<div class="det-item"><span>📅 Fecha / Hora</span><span class="det-val">'+safeText(p.fecha||'')+' '+(p.hora||'')+'</span></div>';html+='</div><div class="modal-footer"><button class="btn btn-success" style="width:auto" onclick="closeModal(\'modalDetallePedidoCliente\');aceptarPedidoCliente(\''+p.id+'\')">✅ Aceptar</button><button class="btn btn-danger" style="width:auto" onclick="closeModal(\'modalDetallePedidoCliente\');rechazarPedidoCliente(\''+p.id+'\')">❌ Rechazar</button><button class="btn btn-secondary" onclick="closeModal(\'modalDetallePedidoCliente\')">Cerrar</button></div></div></div>';document.body.insertAdjacentHTML('beforeend',html);}
-function aceptarPedidoCliente(pid){var db=getDB();var p=db.pedidos.find(function(x){return x.id===pid;});if(!p)return;p.verificado=true;p.estado='Verificado';p.ruteadorId=(currentUser&&currentUser.role==='ruteador')?currentUser.id:'';saveDB(db);opUpsert('Pedidos',p.id,p);publicarBeacon();showToast('✅ Pedido '+pid+' aceptado','success');renderNotifList();}
+}function verDetallePedidoCliente(pid){
+  var db=getDB();
+  var p=db.pedidos.find(function(x){return x.id===pid;});
+  if(!p)return;
+  var ex=document.getElementById('modalDetallePedidoCliente');
+  if(ex)ex.remove();
+  var tienda=db.tiendas.find(function(t){return t.id===p.tiendaId;})||{};
+  var ur=getMapsUrlRetiro(p), ue=getMapsUrlEntrega(p);
+  var html='<div class="modal-overlay active" id="modalDetallePedidoCliente"><div class="modal" style="max-width:600px"><div class="modal-header"><h3>🔍 Detalle del Pedido '+p.id+'</h3><button class="modal-close" onclick="closeModal(\'modalDetallePedidoCliente\')">×</button></div><div class="modal-body">';
+  html+='<div class="det-item"><span>🏪 Tienda (origen)</span><span class="det-val">'+safeText(p.tienda||tienda.nombre)+'</span></div>';
+  html+='<div class="det-item"><span>📍 Dirección de RETIRO</span><span class="det-val">'+(ur?'<a href="'+ur+'" target="_blank" rel="noopener">'+safeText(p.dirRetiro||tienda.direccion||'Ver en mapa')+'</a>':safeText(p.dirRetiro||tienda.direccion||'—'))+'</span></div>';
+  html+='<div class="det-item"><span>🏙️ Ciudad de origen</span><span class="det-val">'+safeText(p.ciudadOrigen||tienda.ciudad||'—')+'</span></div>';
+  html+='<div class="det-item"><span>👤 Cliente final</span><span class="det-val">'+safeText(p.cliente)+'</span></div>';
+  html+='<div class="det-item"><span>📞 Teléfono</span><span class="det-val">'+safeText(p.telefono)+'</span></div>';
+  html+='<div class="det-item"><span>🏙️ Ciudad destino</span><span class="det-val">'+safeText(p.ciudad)+'</span></div>';
+  html+='<div class="det-item"><span>📍 Dirección de entrega</span><span class="det-val">'+(ue?'<a href="'+ue+'" target="_blank" rel="noopener">Ver en Google Maps</a>':safeText(p.dirEntrega))+'</span></div>';
+  html+='<div class="det-item"><span>🕐 Rango horario</span><span class="det-val">'+safeText(p.ventana||'Todo el día')+'</span></div>';
+  html+='<div class="det-item"><span>💰 Monto a cobrar</span><span class="det-val">'+(p.metodo==='Solo Entrega'?'Solo Entrega (0)':formatGs(p.monto))+'</span></div>';
+  html+='<div class="det-item"><span>💳 Método de pago</span><span class="det-val">'+safeText(p.metodo)+'</span></div>';
+  html+='<div class="det-item"><span>🚚 Costo de envío</span><span class="det-val">'+formatGs(p.costo||0)+'</span></div>';
+  html+='<div class="det-item"><span>📝 Observaciones</span><span class="det-val">'+safeText(p.obs||'—')+'</span></div>';
+  html+='<div class="det-item"><span>📅 Fecha / Hora</span><span class="det-val">'+safeText(p.fecha||'')+' '+(p.hora||'')+'</span></div>';
+  if(p.metodoSolicitado){
+    html+='<div class="det-item"><span>🔄 Cambio solicitado</span><span class="det-val">A <b>'+safeText(p.metodoSolicitado)+'</b>. Esperando que la ruteadora lo apruebe.</span></div>';
+  }
+  html+=botonesCambioMetodoCliente(p);
+    /* Aceptar/Rechazar es de la ruteadora/administracion. Si el modal se abre
+     desde la app del cliente, el cliente NO puedeaceptar ni cancelar su propio
+     pedido: solo mirar el detalle. */
+  var esRute=!!(currentUser&&(currentUser.role==='ruteador'||currentUser.role==='admin'||currentUser.role==='dueÃ±o'));
+  html+='</div><div class="modal-footer">'
+    +(esRute?'<button class="btn btn-success" style="width:auto" onclick="closeModal(\'modalDetallePedidoCliente\');aceptarPedidoCliente(\''+p.id+'\')">&#9989; Aceptar</button><button class="btn btn-danger" style="width:auto" onclick="closeModal(\'modalDetallePedidoCliente\');rechazarPedidoCliente(\''+p.id+'\')">&#10060; Rechazar</button>':'')
+    +'<button class="btn btn-secondary" onclick="closeModal(\'modalDetallePedidoCliente\')">Cerrar</button></div></div></div>';document.body.insertAdjacentHTML('beforeend',html);
+}function aceptarPedidoCliente(pid){var db=getDB();var p=db.pedidos.find(function(x){return x.id===pid;});if(!p)return;p.verificado=true;p.estado='Verificado';p.ruteadorId=(currentUser&&currentUser.role==='ruteador')?currentUser.id:'';saveDB(db);opUpsert('Pedidos',p.id,p);publicarBeacon();showToast('✅ Pedido '+pid+' aceptado','success');renderNotifList();}
 function rechazarPedidoCliente(pid){var db=getDB();var p=db.pedidos.find(function(x){return x.id===pid;});if(!p)return;var motivo=prompt('Motivo del rechazo (se enviará al cliente por WhatsApp):','');if(motivo===null)return;if(!motivo.trim()){showToast('Debés indicar el motivo','error');return;}p.estado='Cancelado';p.motivo=motivo.trim();saveDB(db);opUpsert('Pedidos',p.id,p);publicarBeacon();var msg='Hola '+p.cliente+'! 👋\nLamentamos informarte que tu pedido *'+p.id+'* fue *RECHAZADO*.\n❌ Motivo: '+motivo.trim()+'\n\nNos disculpamos, tratamos de mejorar cada día. 🙏\n— JAGI Y ZOE DELIVERY';abrirLinkWhatsApp('https://wa.me/'+phoneToWa(p.telefono)+'?text='+encodeURIComponent(msg));closeModal('modalNotificaciones');showToast('❌ Pedido rechazado. Mensaje enviado al cliente.','info');renderNotifList();}
 function empresaDeTienda(id){var db=getDB();return (db.tiendas||[]).find(function(t){return t.id===id;});}
 function pedidosDeTiendaActual(){var db=getDB();if(!currentUser)return [];var nombre=currentUser.name;return (db.pedidos||[]).filter(function(p){var t=empresaDeTienda(p.tiendaId);return (t&&(t.id===currentUser.tiendaId||t.nombre===nombre||t.email===currentUser.email))||p.tienda===nombre||p.clienteEmail===currentUser.id+'';});}
@@ -3184,6 +3339,433 @@ var notifs=(db.notifications||[]).filter(function(n){var p=db.pedidos.find(funct
 document.getElementById('tiendaNotifs').innerHTML=notifs.length?notifs.map(function(n){return '<div class="notif-item'+(n.read?'':' unread')+'"><div class="notif-icon">🔔</div><div class="notif-text">'+n.message+'<div class="notif-time">'+fmtAgo(n.ts)+'</div></div></div>';}).join(''):'<div style="padding:16px;color:var(--gray-500)">Sin notificaciones</div>';}
 function abrirRendicionTienda(){var db=getDB();var mis=pedidosDeTiendaActual();var entregados=mis.filter(function(p){return p.estado==='Entregado';});var totalCobrado=entregados.reduce(function(s,p){return s+montoRendTienda(p);},0);var servicio=entregados.reduce(function(s,p){return s+(p.costo||0);},0);var pend=entregados.filter(function(p){return (p.estadoPago||'Pendiente a Pagar')!=='Pagado';}).reduce(function(s,p){return s+montoRendTienda(p);},0);var html='<div class="rendicion-summary"><div class="rendicion-box"><div class="rb-label">Total Cobrado</div><div class="rb-value">'+formatGs(totalCobrado)+'</div></div><div class="rendicion-box"><div class="rb-label">(-) Servicio</div><div class="rb-value rb-negative">'+formatGs(servicio)+'</div></div><div class="rendicion-box"><div class="rb-label">= Saldo Tienda</div><div class="rb-value rb-positive">'+formatGs(totalCobrado-servicio)+'</div></div><div class="rendicion-box"><div class="rb-label">Pendiente a Pagar</div><div class="rb-value" style="color:#d68910">'+formatGs(pend)+'</div></div></div>';html+='<div class="table-responsive"><table><thead><tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>Monto</th><th>Servicio</th><th>Estado Pago</th></tr></thead><tbody>';html+=entregados.map(function(p){var pago=p.estadoPago||'Pendiente a Pagar';return '<tr><td>'+p.id+'</td><td>'+p.fecha+'</td><td>'+safeText(p.cliente)+'</td><td class="currency">'+formatGs(montoRendTienda(p))+'</td><td class="currency">'+formatGs(p.costo||0)+'</td><td>'+(pago==='Pagado'?'<span class="badge badge-pago-ok">🟢 Pagado</span>':'<span class="badge badge-pago-pend">🟡 Pendiente</span>')+'</td></tr>';}).join('')||'<tr><td colspan="6" style="text-align:center;padding:16px">Sin entregados</td></tr>';html+='</tbody></table></div>';document.getElementById('tiendaRendicionBody').innerHTML=html;openModal('modalRendicionTienda');}
 function solicitarRendicionTienda(){var db=getDB();var mis=pedidosDeTiendaActual();var pend=mis.filter(function(p){return p.estado==='Entregado'&&(p.estadoPago||'Pendiente a Pagar')!=='Pagado';}).reduce(function(s,p){return s+montoRendTienda(p)-(p.costo||0);},0);var n={id:'n'+Date.now(),ts:Date.now(),type:'solicitud_rendicion',pedidoId:'',cliente:currentUser.name,tienda:currentUser.name,ciudad:'',message:'📩 La tienda "'+currentUser.name+'" solicita rendición. Saldo pendiente aprox: '+formatGs(pend)+'.',read:false,ruteadorId:''};db.notifications=db.notifications||[];db.notifications.unshift(n);saveDB(db);opUpsert('Notificaciones',n.id,n);publicarBeacon();showToast('📩 Solicitud de rendición enviada a Administración','success');renderTiendaApp();(function(){var adminUser=db.users.find(function(u){return (u.estado==='Activo'&&(u.role==='admin'||u.role==='dueño'))&&u.telefono;});var adminTel=adminUser?phoneToWa(adminUser.telefono):'';var msg='📩 SOLICITUD DE RENDICIÓN:\nTienda: '+currentUser.name+'\nSaldo pendiente aprox: '+formatGs(pend)+'\nPor favor revisar en Admin.';if(!adminTel){showToast('⚠️ No se encontró el WhatsApp del Administrador','error');return;}window.open('https://wa.me/'+adminTel+'?text='+encodeURIComponent(msg),'_blank');})();}
+/* ==========================================================================
+   CLIENTE FINAL: ORIGEN PROPIO, MÉTODO DE PAGO, RENDICIÓN Y CAMBIO DE MÉTODO
+   ========================================================================== */
+
+/* --- 1. Ubicación propia del cliente -------------------------------------
+   El cliente final (no la tienda) también necesita decir de dónde se retiran
+   sus pedidos. Antes esa dirección solo vivía en el <select> de tienda de cada
+   pedido; ahora se registra una vez y queda como origen. Se guarda en la fila
+   de Tiendas (que es la que tiene las columnas) y el usuario solo apunta a ella
+   con tiendaId. Si no guardamos nada en el usuario es porque la hoja Usuarios no
+   tiene columnas de ciudad/direccion/urlMaps y el dato se perderia. */
+function ubicacionPropiaCliente(){
+  var db=getDB(), u=currentUser||{};
+  var t=tiendaDeClienteActual();
+  return {
+    tienda:t||null,
+    ciudad:(t&&t.ciudad)||u.ciudad||'',
+    direccion:(t&&t.direccion)||u.direccion||'',
+    urlMaps:(t&&t.urlMaps)||u.urlMaps||''
+  };
+}
+
+function tiendaDeClienteActual(){
+  var db=getDB(), u=currentUser;
+  if(!u)return null;
+  var lista=db.tiendas||[];
+  if(u.tiendaId){
+    var t=lista.find(function(x){return x.id===u.tiendaId;});
+    if(t)return t;
+  }
+  /* Respaldo: una tienda con el mismo email que el usuario (por si se creo
+     antes de que existiera tiendaId). */
+  var t2=lista.find(function(x){return normEmail(x.email||'')===normEmail(u.email||u.id||'');});
+  if(t2){ u.tiendaId=t2.id; return t2; }
+  return null;
+}
+
+function tieneUbicacionPropiaCliente(){
+  var u=ubicacionPropiaCliente();
+  return !!(u.ciudad && u.urlMaps && isGoogleMapsUrl(u.urlMaps));
+}
+
+/* --- 2. Editar mis datos / ubicación ----------------------------------- */
+function abrirDatosCliente(){
+  var ex=document.getElementById('modalDatosCliente');
+  if(ex)ex.remove();
+  var u=ubicacionPropiaCliente();
+  var sel='<option value="">Seleccionar...</option>';
+  (CIUDADES||[]).forEach(function(c){
+    sel+='<option value="'+safeText(c)+'"'+(c===u.ciudad?' selected':'')+'>'+safeText(c)+'</option>';
+  });
+  var html='<div class="modal-overlay active" id="modalDatosCliente"><div class="modal" style="max-width:560px">'
+    +'<div class="modal-header"><h3>📍 Mis datos y ubicación de retiro</h3>'
+    +'<button class="modal-close" onclick="closeModal(\'modalDatosCliente\')">×</button></div>'
+    +'<div class="modal-body">'
+    +'<div class="info-box">Esta ubicación es <b>de dónde se retiran tus pedidos</b>. La registrás una sola vez y después <b>ya no vas a elegir tienda</b> al cargar un pedido.</div>'
+    +'<div class="form-grid">'
+    +'<div class="form-group"><label>Nombre que verá el delivery *</label><input type="text" id="dcNombre" placeholder="Ej: Rinat"></div>'
+    +'<div class="form-group"><label>Teléfono *</label><input type="text" id="dcTel" placeholder="09..."></div>'
+    +'<div class="form-group"><label>Ciudad *</label><select id="dcCiudad">'+sel+'</select></div>'
+    +'<div class="form-group full-width"><label>Dirección de retiro (texto) *</label><input type="text" id="dcDir" placeholder="Ej: Av. Brasil esq. Juan de Garay"></div>'
+    +'<div class="form-group full-width"><label>🗺️ Link de Google Maps del retiro *</label>'
+    +'<input type="text" id="dcMaps" placeholder="https://maps.app.goo.gl/..." oninput="validarMapsInput(\'dcMaps\',\'errDCMaps\',\'dcMapsInfo\')">'
+    +'<div class="error-message" id="errDCMaps">⚠️ El link de Google Maps es obligatorio</div>'
+    +'<div style="margin-top:8px"><button type="button" class="btn btn-maps btn-xs" onclick="sugerirLinkMapsDesde(\'dcDir\',\'dcMaps\')">🔎 Buscar esta dirección en Google Maps</button></div>'
+    +'<div class="info-box" id="dcMapsInfo"></div></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px;margin-top:14px">'
+    +'<button class="btn btn-primary" style="flex:1" onclick="guardarDatosCliente()">💾 Guardar</button>'
+    +'<button class="btn btn-secondary" style="flex:1" onclick="closeModal(\'modalDatosCliente\')">Cancelar</button>'
+    +'</div></div></div></div>';
+  document.body.insertAdjacentHTML('beforeend',html);
+  document.getElementById('dcNombre').value=(u.tienda&&u.tienda.nombre)||currentUser.name||'';
+  document.getElementById('dcTel').value=currentUser.telefono||'';
+  document.getElementById('dcDir').value=u.direccion||'';
+  document.getElementById('dcMaps').value=u.urlMaps||'';
+}
+
+function guardarDatosCliente(){
+  var nombre=(document.getElementById('dcNombre')||{}).value.trim();
+  var tel=(document.getElementById('dcTel')||{}).value.trim();
+  var ciudad=(document.getElementById('dcCiudad')||{}).value;
+  var dir=(document.getElementById('dcDir')||{}).value.trim();
+  var maps=(document.getElementById('dcMaps')||{}).value.trim();
+  if(!nombre){showToast('Escribí tu nombre','error');return;}
+  if(!tel){showToast('Escribí tu teléfono','error');return;}
+  if(!ciudad){showToast('Elegí tu ciudad','error');return;}
+  if(!dir){showToast('Escribí la dirección de retiro','error');return;}
+  if(!isGoogleMapsUrl(maps)){showToast('La ubicación debe ser un LINK de GOOGLE MAPS','error');return;}
+  maps=normalizeMapsUrl(maps);
+  var db=getDB();
+  var u=(db.users||[]).find(function(x){return x.id===currentUser.id;});
+  if(!u){showToast('No se encontró tu usuario','error');return;}
+  u.name=nombre; u.telefono=tel;
+  var t=(db.tiendas||[]).find(function(x){return x.id===u.tiendaId;});
+  if(!t)t=(db.tiendas||[]).find(function(x){return normEmail(x.email||'')===normEmail(u.email||u.id||'');});
+  if(t){
+    t.nombre=nombre; t.contacto=nombre; t.telefono=tel;
+    t.ciudad=ciudad; t.direccion=dir; t.urlMaps=maps; t.email=u.email||u.id;
+    u.tiendaId=t.id;
+    opUpsert('Tiendas',t.id,t);
+  }else{
+    var tid='t'+Date.now()+Math.random().toString(16).slice(2,6);
+    t={id:tid,nombre:nombre,contacto:nombre,telefono:tel,ciudad:ciudad,direccion:dir,urlMaps:maps,email:u.email||u.id};
+    db.tiendas=db.tiendas||[]; db.tiendas.push(t);
+    u.tiendaId=tid;
+    opUpsert('Tiendas',t.id,t);
+  }
+  saveDB(db);
+  opUpsert('Usuarios',u.id,u);
+  publicarBeacon();
+  closeModal('modalDatosCliente');
+  showToast('✅ Ubicación guardada. Ya no vas a elegir tienda.','success');
+  renderClientApp();
+}
+
+/* --- 3. Sugerir el link de Google Maps ---------------------------------- */
+function sugerirLinkMapsDesde(dirId,mapsId){
+  var dirEl=document.getElementById(dirId);
+  var dir=dirEl?String(dirEl.value||'').trim():'';
+  var ciudad=(document.getElementById('cCiudad')||{}).value||'';
+  var propia=ubicacionPropiaCliente().ciudad||'';
+  var q=[dir,ciudad,propia].filter(Boolean).join(' ');
+  if(!q){showToast('Escribí la dirección primero','info');return;}
+  window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q),'_blank');
+  showToast('Buscá tu punto en el mapa y copiá el link de la barra de direcciones.','info');
+}
+function sugerirLinkMapsCliente(){sugerirLinkMapsDesde('cDirEntrega','cDirEntrega');}
+
+function usarLinkMapsClienteRegistrado(){
+  var u=ubicacionPropiaCliente();
+  var inp=document.getElementById('cDirEntrega');
+  if(!inp)return;
+  if(!u.urlMaps||!isGoogleMapsUrl(u.urlMaps)){
+    showToast('Todavía no tenés una ubicación registrada','info');
+    abrirDatosCliente();
+    return;
+  }
+  inp.value=normalizeMapsUrl(u.urlMaps);
+  var info=document.getElementById('cEntregaInfo');
+  if(info)info.innerHTML='✅ Link de Google Maps válido';
+  var err=document.getElementById('errCDirEntrega');
+  if(err)err.style.display='none';
+  showToast('Se usó tu ubicación registrada','success');
+}
+
+/* --- 4. Método de pago: Solo Entrega = monto 0 ------------------------- */
+function onClienteMetodoChange(){
+  var sel=document.getElementById('cMetodo');
+  var inp=document.getElementById('cMonto');
+  var info=document.getElementById('cMontoInfo');
+  if(!sel||!inp)return;
+  var solo=sel.value==='Solo Entrega';
+  if(solo){
+    if(!inp.dataset.montoPrevio)inp.dataset.montoPrevio=inp.value||'';
+    inp.value='0';
+    inp.readOnly=true;
+    if(info)info.innerHTML='ℹ️ Con <b>Solo Entrega</b> no se cobra monto: queda en <b>0</b>.';
+  }else{
+    if(inp.readOnly){ inp.value=inp.dataset.montoPrevio||''; inp.dataset.montoPrevio=''; inp.readOnly=false; }
+    if(info)info.innerHTML=sel.value==='Efectivo'
+      ? '💵 Con <b>Efectivo</b> te cobramos el monto al cliente.'
+      : '🏦 Con <b>Transferencia</b> el cliente paga por transferencia.';
+  }
+}
+
+/* --- 5. Pestañas de la app del cliente ---------------------------------- */
+var _clientTab='pedidos';
+function clientTab(which){
+  _clientTab=(which==='rendicion')?'rendicion':'pedidos';
+  var esR=_clientTab==='rendicion';
+  var p=document.getElementById('clientPanePedidos');
+  var r=document.getElementById('clientPaneRendicion');
+  if(p)p.style.display=esR?'none':'';
+  if(r)r.style.display=esR?'':'none';
+  var b1=document.getElementById('clientTabPedidos');
+  var b2=document.getElementById('clientTabRendicion');
+  if(b1){b1.classList.toggle('btn-primary',!esR);b1.classList.toggle('btn-secondary',esR);}
+  if(b2){b2.classList.toggle('btn-primary',esR);b2.classList.toggle('btn-secondary',!esR);}
+  if(esR)renderClienteRendicion();
+}
+
+function renderClienteDatos(){
+  var box=document.getElementById('clientDatosBody');
+  var card=document.getElementById('clientDatosCard');
+  if(!box)return;
+  var u=ubicacionPropiaCliente();
+  var ok=tieneUbicacionPropiaCliente();
+  if(!ok&&card)card.style.display='none';
+  var wa=isGoogleMapsUrl(u.urlMaps)?normalizeMapsUrl(u.urlMaps):'';
+  var html='<div style="font-weight:700">🏪 Origen de tus pedidos: '+safeText((u.tienda&&u.tienda.nombre)||currentUser.name)+'</div>'
+    +'<div>🏙️ Ciudad: '+safeText(u.ciudad||'—')+'</div>'
+    +(u.direccion?'<div>📍 '+safeText(u.direccion)+'</div>':'')
+    +(wa?'<div><a href="'+wa+'" target="_blank" rel="noopener">🔗 Ver en Google Maps</a></div>':'')
+    +'<div style="margin-top:6px;font-weight:700">👤 Cliente final: '+safeText(currentUser.name)+'</div>'
+    +'<div>📞 '+safeText(currentUser.telefono||'—')+'</div>';
+  box.innerHTML=html;
+}
+
+/* --- 6. Pestaña de Rendición ------------------------------------------- */
+function totalesRendicionCliente(){
+  var mis=pedidosDeTiendaActual();
+  var entregados=mis.filter(function(p){return p.estado==='Entregado';});
+  var total=0, servicio=0, pagados=0, pend=0, listaPend=[];
+  entregados.forEach(function(p){
+    var m=montoRendTienda(p);
+    total+=m;
+    servicio+=(p.costo||0);
+    if((p.estadoPago||'Pendiente a Pagar')==='Pagado')pagados+=m;
+    else{pend+=m;listaPend.push(p);}
+  });
+  return {entregados:entregados,lista:listaPend,total:total,servicio:servicio,pagados:pagados,pend:pend,saldo:total-servicio};
+}
+
+function renderClienteRendicion(){
+  var box=document.getElementById('clientRendicionBody');
+  if(!box)return;
+  var t=totalesRendicionCliente();
+  var html='<div class="rendicion-summary">'
+    +'<div class="rendicion-box"><div class="rb-label">Entregas</div><div class="rb-value">'+t.entregados.length+'</div></div>'
+    +'<div class="rendicion-box"><div class="rb-label">Total cobrado</div><div class="rb-value">'+formatGs(t.total)+'</div></div>'
+    +'<div class="rendicion-box"><div class="rb-label">(-) Servicio</div><div class="rb-value rb-negative">'+formatGs(t.servicio)+'</div></div>'
+    +'<div class="rendicion-box"><div class="rb-label">(=) Saldo</div><div class="rb-value rb-positive">'+formatGs(t.saldo)+'</div></div>'
+    +'<div class="rendicion-box"><div class="rb-label">Ya pagado</div><div class="rb-value">'+formatGs(t.pagados)+'</div></div>'
+    +'<div class="rendicion-box"><div class="rb-label">Pendiente a pagar</div><div class="rb-value" style="color:#d68910">'+formatGs(t.pend)+'</div></div>'
+    +'</div>';
+  var filas=t.entregados.slice().sort(function(a,b){return b.id.localeCompare(a.id);});
+  html+='<div class="table-responsive"><table><thead><tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>Destino</th><th>Horario</th><th>Cobrado</th><th>Servicio</th><th>Pago</th></tr></thead><tbody>';
+  html+=filas.map(function(p){
+    var pago=p.estadoPago||'Pendiente a Pagar';
+    return '<tr><td>'+p.id+'</td><td>'+p.fecha+'</td><td>'+safeText(p.cliente)+'</td><td>'+safeText(p.ciudad)+'</td><td>'+safeText(p.ventana||'Todo el día')+'</td><td class="currency">'+formatGs(montoRendTienda(p))+'</td><td class="currency">'+formatGs(p.costo||0)+'</td><td>'+(pago==='Pagado'?'<span class="badge badge-pago-ok">🟢 Pagado</span>':'<span class="badge badge-pago-pend">🟡 Pendiente</span>')+'</td></tr>';
+  }).join('')||'<tr><td colspan="8" style="text-align:center;padding:16px">Todavía no tenés entregas entregadas.</td></tr>';
+  html+='</tbody></table></div>';
+  html+='<button class="btn btn-whatsapp" style="width:100%;margin-top:14px" onclick="solicitarRendicionCliente()">📩 Solicitar rendición al Administrador</button>';
+  box.innerHTML=html;
+}
+
+/* --- 7. Foto de la rendición (canvas) ---------------------------------- */
+function fotoRendicionCliente(t){
+  t=t||totalesRendicionCliente();
+  var lista=t.entregados.slice().sort(function(a,b){return b.id.localeCompare(a.id);});
+  var W=980, PAD=26;
+  var H=330+lista.length*30+50;
+  var cv=document.createElement('canvas');
+  cv.width=W; cv.height=H;
+  var g=cv.getContext('2d');
+  g.fillStyle='#ffffff'; g.fillRect(0,0,W,H);
+  g.fillStyle='#1a73e8'; g.fillRect(0,0,W,76);
+  g.fillStyle='#ffffff'; g.textBaseline='middle';
+  g.font='bold 27px system-ui,sans-serif'; g.fillText('JAGI Y ZOE DELIVERY - Rendición',PAD,30);
+  g.font='15px system-ui,sans-serif'; g.fillText((currentUser.name||'')+'  ·  '+hoyLocal(),PAD,58);
+  var y=110;
+  g.fillStyle='#202124'; g.font='bold 18px system-ui,sans-serif';
+  g.fillText('Entregas: '+lista.length+'        PENDIENTE A PAGAR: '+formatGs(t.pend),PAD,y);
+  y+=30;
+  g.font='16px system-ui,sans-serif';
+  g.fillText('Total cobrado: '+formatGs(t.total)+'     (-) Servicio: '+formatGs(t.servicio)+'     (=) Saldo: '+formatGs(t.saldo)+'     Ya pagado: '+formatGs(t.pagados),PAD,y);
+  y+=32;
+  g.strokeStyle='#dadce0'; g.lineWidth=1; g.beginPath(); g.moveTo(PAD,y); g.lineTo(W-PAD,y); g.stroke();
+  y+=20;
+  g.fillStyle='#5f6368'; g.font='bold 14px system-ui,sans-serif';
+  g.fillText('ID',PAD,y); g.fillText('FECHA',PAD+96,y); g.fillText('CLIENTE',PAD+190,y);
+  g.fillText('DESTINO',PAD+440,y); g.fillText('COBRADO',PAD+620,y); g.fillText('SERVICIO',PAD+770,y);
+  y+=24;
+  g.font='14px system-ui,sans-serif';
+  lista.forEach(function(p,i){
+    if(i%2===0){g.fillStyle='#f1f3f4';g.fillRect(PAD,y-13,W-2*PAD,26);}
+    g.fillStyle='#202124';
+    g.fillText(String(p.id||''),PAD,y);
+    g.fillText(String(p.fecha||''),PAD+96,y);
+    g.fillText(String(p.cliente||'').slice(0,30),PAD+190,y);
+    g.fillText(String(p.ciudad||'').slice(0,20),PAD+440,y);
+    g.fillText(formatGs(montoRendTienda(p)),PAD+620,y);
+    g.fillText(formatGs(p.costo||0),PAD+770,y);
+    y+=30;
+  });
+  return cv.toDataURL('image/png');
+}
+
+/* --- 8. Solicitar rendición por WhatsApp, con la foto ------------------ */
+async function solicitarRendicionCliente(){
+  var t=totalesRendicionCliente();
+  if(!t.entregados.length){showToast('Todavía no tenés entregas entregadas','info');return;}
+  var fotoUrl='';
+  try{
+    showToast('Generando la foto de la rendición...','info');
+    var dataUrl=fotoRendicionCliente(t);
+    showToast('Subiendo la foto...','info');
+    var up=await uploadComprobante(dataUrl,'rendicion_'+(currentUser.name||'cliente').replace(/\W+/g,'_')+'_'+hoyLocal()+'.png');
+    if(up&&up.ok)fotoUrl=up.url||'';
+  }catch(e){fotoUrl='';}
+  var lista=t.lista.slice(0,30).map(function(p){
+    return '  • '+p.id+'  '+p.fecha+'  '+(p.cliente||'')+' ('+(p.ciudad||'')+'): '+formatGs(montoRendTienda(p));
+  }).join('\n');
+  var tienda=(empresaDeTienda(currentUser.tiendaId)||{}).nombre||currentUser.name;
+  var msg='📩 SOLICITUD DE RENDICIÓN\n'
+    +'Cliente: '+(currentUser.name||'')+'\n'
+    +'Origen: '+tienda+'\n'
+    +'Correo: '+(currentUser.email||currentUser.id)+'\n'
+    +'-------------------------------\n'
+    +'Entregas entregadas: '+t.entregados.length+'\n'
+    +'Total cobrado: '+formatGs(t.total)+'\n'
+    +'(-) Servicio: '+formatGs(t.servicio)+'\n'
+    +'(=) Saldo: '+formatGs(t.saldo)+'\n'
+    +'Ya pagado: '+formatGs(t.pagados)+'\n'
+    +'PENDIENTE A PAGAR: '+formatGs(t.pend)+'\n'
+    +'-------------------------------\n'
+    +(lista?('Pedidos pendientes:\n'+lista+'\n\n'):'')
+    +(fotoUrl?('📷 Foto de la rendición:\n'+fotoUrl):'📷 No se pudo subir la foto.');
+  /* Aviso dentro del sistema para que Administración también lo vea. */
+  var db=getDB();
+  var n={id:'n'+Date.now()+Math.random().toString(16).slice(2),
+    ts:Date.now(), type:'solicitud_rendicion', pedidoId:'',
+    cliente:currentUser.name, tienda:tienda, ciudad:'',
+    message:'📩 '+currentUser.name+' solicita rendición de TODAS sus entregas. Saldo: '+formatGs(t.saldo)+'. Pendiente a pagar: '+formatGs(t.pend)+'.'+(fotoUrl?' Foto: '+fotoUrl:''),
+    read:false, ruteadorId:''};
+  db.notifications=db.notifications||[];
+  db.notifications.unshift(n);
+  if(db.notifications.length>200)db.notifications.length=200;
+  saveDB(db);
+  opUpsert('Notificaciones',n.id,n);
+  publicarBeacon();
+  var adminUser=(db.users||[]).find(function(u){return u.estado==='Activo'&&(u.role==='admin'||u.role==='dueño')&&u.telefono;});
+  var adminTel=adminUser?phoneToWa(adminUser.telefono):'';
+  if(!adminTel){
+    showToast('⚠️ No se encontró el WhatsApp del Administrador. El aviso quedó en Notificaciones.','error');
+    renderClienteRendicion();
+    return;
+  }
+  window.open('https://wa.me/'+adminTel+'?text='+encodeURIComponent(msg),'_blank');
+  showToast('📩 Rendición enviada a Administración','success');
+  renderClienteRendicion();
+}
+
+/* --- 9. Cambio de método de un pedido ya creado ----------------------- */
+function clienteSolicitarSoloEntrega(pid){
+  var db=getDB();
+  var p=(db.pedidos||[]).find(function(x){return x.id===pid;});
+  if(!p){showToast('Pedido no encontrado','error');return;}
+  var mio=(p.clienteEmail===currentUser.id)||(p.telefono&&p.telefono===currentUser.telefono);
+  if(!mio){showToast('Ese pedido no es tuyo','error');return;}
+  if(p.metodo!=='Efectivo'){showToast('Solo se puede pedir el cambio si el pedido es Efectivo','info');return;}
+  if(p.metodoSolicitado){showToast('Ya hay una solicitud esperando respuesta','info');return;}
+  p.metodoSolicitado='Solo Entrega';
+  p.cambioMetodoTs=Date.now();
+  p.cambioMetodoNota='Solicitado por el cliente '+(currentUser.name||'')+' el '+hoyLocal();
+  saveDB(db);
+  opUpsert('Pedidos',p.id,p);
+  var n={id:'n'+Date.now()+Math.random().toString(16).slice(2),ts:Date.now(),
+    type:'cambio_metodo',pedidoId:p.id,cliente:p.cliente,tienda:p.tienda,ciudad:p.ciudad,
+    message:'🔄 El cliente pide cambiar el método de pago de '+p.id+' de Efectivo a Solo Entrega. La ruteadora debe aprobarlo, dejar el monto en 0 y actualizar la hoja.',
+    read:false,ruteadorId:p.ruteadorId||'',handled:false};
+  db.notifications=db.notifications||[];
+  db.notifications.unshift(n);
+  if(db.notifications.length>200)db.notifications.length=200;
+  saveDB(db);
+  opUpsert('Notificaciones',n.id,n);
+  publicarBeacon();
+  showToast('⏳ Solicitud enviada a la ruteadora','success');
+  renderClientApp();
+  if(_clientTab==='rendicion')renderClienteRendicion();
+}
+
+function _cerrarSolicitudCambioMetodo(pid){
+  var db=getDB();
+  (db.notifications||[]).forEach(function(n){
+    if(n.type==='cambio_metodo'&&n.pedidoId===pid&&!n.handled){n.handled=true;n.read=true;opUpsert('Notificaciones',n.id,n);}
+  });
+  saveDB(db);
+}
+
+function ruteadorAprobarCambioMetodo(pid){
+  var db=getDB();
+  var p=(db.pedidos||[]).find(function(x){return x.id===pid;});
+  if(!p||!p.metodoSolicitado){showToast('No hay solicitud pendiente','info');return;}
+  p.metodo=p.metodoSolicitado;
+  if(p.metodo==='Solo Entrega')p.monto=0;
+  p.metodoSolicitado='';
+  p.cambioMetodoTs=Date.now();
+  p.cambioMetodoNota=(p.cambioMetodoNota||'')+' | APROBADO por '+(currentUser.name||'')+' el '+hoyLocal()+' → monto 0';
+  saveDB(db);
+  opUpsert('Pedidos',p.id,p);
+  _cerrarSolicitudCambioMetodo(pid);
+  publicarBeacon();
+  showToast('✅ Método cambiado a '+p.metodo+'. Monto: '+formatGs(p.monto),'success');
+  renderNotifList();
+  if(typeof renderAll==='function')renderAll();
+}
+
+function ruteadorRechazarCambioMetodo(pid){
+  var db=getDB();
+  var p=(db.pedidos||[]).find(function(x){return x.id===pid;});
+  if(!p||!p.metodoSolicitado){showToast('No hay solicitud pendiente','info');return;}
+  p.metodoSolicitado='';
+  p.cambioMetodoTs=Date.now();
+  p.cambioMetodoNota=(p.cambioMetodoNota||'')+' | RECHAZADO por '+(currentUser.name||'')+' el '+hoyLocal();
+  saveDB(db);
+  opUpsert('Pedidos',p.id,p);
+  _cerrarSolicitudCambioMetodo(pid);
+  publicarBeacon();
+  showToast('Solicitud rechazada','info');
+  renderNotifList();
+  if(typeof renderAll==='function')renderAll();
+}
+
+/* Botones extra dentro de la lista de notificaciones (ruteadora / admin). */
+function extraNotificacion(n){
+  if(n.type==='cambio_metodo'&&n.pedidoId){
+    return '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">'
+      +'<button class="btn btn-xs btn-primary" onclick="ruteadorAprobarCambioMetodo(\''+n.pedidoId+'\')">✅ Aprobar (monto 0)</button>'
+      +'<button class="btn btn-xs btn-danger" onclick="ruteadorRechazarCambioMetodo(\''+n.pedidoId+'\')">❌ Rechazar</button>'
+      +'<button class="btn btn-xs btn-secondary" onclick="verDetallePedido(\''+n.pedidoId+'\')">🔍 Ver detalle</button>'
+      +'</div>';
+  }
+  return '';
+}
+
+/* Botón de cambio de método dentro de las tarjetas del cliente. */
+function botonesCambioMetodoCliente(p){
+  if(p.metodoSolicitado==='Solo Entrega'){
+    return '<div style="margin-top:8px"><span class="badge" style="background:#fef3c7;color:#92400e">⏳ Pediste pasarlo a Solo Entrega. La ruteadora tiene que aprobarlo.</span></div>';
+  }
+  if(p.metodo==='Efectivo'){
+    return '<div style="margin-top:8px"><button class="btn btn-xs btn-secondary" onclick="clienteSolicitarSoloEntrega(\''+p.id+'\')">🔄 Pedir cambio a Solo Entrega</button></div>';
+  }
+  return '';
+}
 /* #### FIN ZOE v7 #### */
 function abrirTarifasCliente(){var db=getDB();var html='<div style="padding:8px 10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--gray-200);margin:-8px -10px 12px"><label style="font-size:.85rem;margin:0">🔎 Buscar ciudad:</label><input type="text" id="cliTarBuscar" oninput="filtrarTarifasCliente()" placeholder="Origen o destino (Ej: Luque)..." style="max-width:280px"><button class="btn btn-sm btn-whatsapp" onclick="closeModal(\'modalTarifasCliente\');abrirModalFlyer();" style="margin-left:auto">🎨 Generar Flyer</button></div><div class="tarifa-matrix"><table><thead><tr><th>Origen \\ Destino</th>';CIUDADES.forEach(function(c){html+='<th>'+c+'</th>';});html+='</tr></thead><tbody>';CIUDADES.forEach(function(o){html+='<tr><td><strong>'+o+'</strong></td>';CIUDADES.forEach(function(d){var v=(db.tarifas[o]&&db.tarifas[o][d])||0;html+='<td style="text-align:center;padding:6px">'+(v?formatGs(v):'-')+'</td>';});html+='</tr>';});html+='</tbody></table></div>';var ex=document.getElementById('modalTarifasCliente');if(ex)ex.remove();var h='<div class="modal-overlay active" id="modalTarifasCliente"><div class="modal" style="max-width:900px"><div class="modal-header"><h3>💲 Tarifas de Envío por Ciudad</h3><button class="modal-close" onclick="closeModal(\'modalTarifasCliente\')">×</button></div><div class="modal-body" style="max-height:70vh;overflow:auto">'+html+'</div></div></div>';document.body.insertAdjacentHTML('beforeend',h);}
 function filtrarTarifasCliente(){var q=(document.getElementById('cliTarBuscar').value||'').toLowerCase();var tb=document.querySelector('#cliTarifasBody tbody, #modalTarifasCliente .tarifa-matrix tbody');if(!tb)return;Array.from(tb.rows).forEach(function(r){var rowText=(r.textContent||'').toLowerCase();r.style.display=!q||rowText.includes(q)?'':'none';});}
