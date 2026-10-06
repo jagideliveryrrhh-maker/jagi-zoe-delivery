@@ -362,6 +362,7 @@ table tr:hover{background:rgba(108,92,231,.03)}
 <div id="navRuteador">
 <div class="nav-section">Operación</div>
 <div class="nav-item active" onclick="showPage('dashboard'); closeSidebarMobile();"><span class="icon">📊</span> Dashboard</div>
+<div class="nav-item" onclick="showPage('pedidosNuevos'); closeSidebarMobile();"><span class="icon">📥</span> Pedidos Nuevos</div>
 <div class="nav-item" onclick="showPage('nuevoPedido'); closeSidebarMobile();"><span class="icon">📦</span> Cargar Pedidos</div>
 <div class="nav-item" onclick="showPage('asignacion'); closeSidebarMobile();"><span class="icon">🎯</span> Asignar</div>
 <div class="nav-item" onclick="showPage('adelantos'); closeSidebarMobile();"><span class="icon">💸</span> Adelantos</div>
@@ -413,6 +414,15 @@ table tr:hover{background:rgba(108,92,231,.03)}
 <div class="card">
 <div class="card-header"><h3>📋 Pedidos Recientes</h3><button class="btn btn-primary btn-sm" onclick="showPage('nuevoPedido')">+ Nuevo</button></div>
 <div class="card-body"><div class="table-responsive"><table><thead><tr><th>ID</th><th>Tienda</th><th>Cliente</th><th>Destino</th><th>Monto</th><th>Delivery</th><th>Estado</th></tr></thead><tbody id="dashboardTable"></tbody></table></div></div>
+</div>
+</div>
+<div class="page-content page hidden" id="page-pedidosNuevos">
+<div class="card">
+<div class="card-header"><h3>📥 Pedidos Nuevos de las Tiendas</h3><span class="badge badge-unassigned" id="pnNuevosCount">0</span></div>
+<div class="card-body">
+<div class="alert-info">🛍️ Acá van llegando los pedidos que cargan las tiendas. Tocá <strong>Ver detalles</strong>: vas a poder <strong>picar el link de Google Maps de la entrega</strong> para ver dónde mismo se entrega, y ahí decidís <strong>✅ Aceptar</strong> o <strong>❌ Rechazar</strong>.</div>
+<div id="pedidosNuevosList"></div>
+</div>
 </div>
 </div>
 <div class="page-content page hidden" id="page-nuevoPedido">
@@ -787,7 +797,7 @@ table tr:hover{background:rgba(108,92,231,.03)}
 </div>
 <div style="display:flex;gap:8px;padding:10px 12px 4px;flex-wrap:wrap">
 <button class="btn btn-warning" style="flex:1;min-width:150px" onclick="abrirTarifasCliente()">&#127991; Consultar Tarifas</button>
-<button class="btn btn-maps" style="flex:1;min-width:150px" onclick="abrirModalFlyer()">&#128196; Generar Flyer</button>
+<button class="btn btn-maps" style="flex:1;min-width:150px" onclick="abrirModalFlyerCliente()">&#128196; Generar Flyer</button>
 <button class="btn btn-secondary" style="flex:1;min-width:150px" onclick="abrirRendicionTienda()">&#128176; Mi Rendici&#243;n</button>
 </div>
 <div style="display:flex;gap:8px;padding:8px 12px 4px">
@@ -795,11 +805,12 @@ table tr:hover{background:rgba(108,92,231,.03)}
 <button class="btn btn-secondary" style="flex:1" id="clientTabRendicion" onclick="clientTab('rendicion')">&#128202; Rendici&#243;n</button>
 </div>
 <div id="clientPanePedidos" style="padding:0 16px 20px">
+<div class="card"><div class="card-header" style="flex-wrap:wrap;gap:10px"><h3>💲 Tarifas de Envío</h3><button class="btn btn-whatsapp btn-sm" onclick="abrirModalFlyerCliente()">🎨 Generar Flyer</button></div><div class="card-body"><div class="alert-info" style="margin-bottom:12px">🎨 Al entrar, el flyer de tarifas se genera <strong>con tu ciudad</strong>. Cambiá la ciudad y se regenera solo. 🗺️ Los links son Google Maps.</div><div class="form-group" style="margin-bottom:12px"><label>🏙️ Ciudad (origen)</label><select id="clientCiudadOrigen" onchange="onClienteCiudadOrigenChange()"></select></div><div class="tarifa-matrix" id="tarifaMatrixCliente"></div></div></div>
 <div class="card" id="clientDatosCard"><div class="card-header"><h3>&#128205; Mis Datos</h3></div><div class="card-body"><div id="clientDatosBody"></div><button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="abrirDatosCliente()">&#9998; Editar mis datos / ubicaci&#243;n</button></div></div>
 <div class="card"><div class="card-header"><h3>&#128230; Cargar Nuevo Pedido</h3></div><div class="card-body">
 <form id="formClientePedido" onsubmit="return savePedidoCliente(event)">
 <div class="form-grid">
-<div class="form-group full-width" id="cTiendaGroup"><label>Tienda *</label><select id="cTienda"><option value="">Seleccionar...</option></select></div>
+<div class="form-group full-width" id="cTiendaGroup"><label>Tienda *</label><select id="cTienda" onchange="onClienteTiendaSeleccionada()"><option value="">Seleccionar...</option></select></div>
 <div class="form-group full-width"><div class="info-box" id="cOrigenInfo"></div></div>
 <div class="form-group"><label>Tu nombre *</label><input type="text" id="cCliente"></div>
 <div class="form-group"><label>Tel&#233;fono *</label><input type="text" id="cTelefono"></div>
@@ -1497,7 +1508,7 @@ function frameGet(params,timeoutMs){return new Promise(function(resolve,reject){
    El iframe (frameGet) queda solo para fallos rapidos de red/CORS y con presupuesto
    corto: Apps Script responde X-Frame-Options: SAMEORIGIN, asi que el iframe no puede
    cargar la pagina desde otro origen y nunca sirvio como plan B real. */
-async function apiGet(params,timeoutMs,signal){const ms=timeoutMs||10000;const ctrl=(signal)||(('AbortController'in window)?new AbortController():null);const to=ctrl?setTimeout(function(){try{ctrl.abort();}catch(e){}},ms):null;try{const res=await fetch(API_URL+'?'+new URLSearchParams(params).toString(),{method:'GET',redirect:'follow',cache:'no-store',signal:ctrl?ctrl.signal:undefined});if(to)clearTimeout(to);if(!res.ok)throw new Error('HTTP '+res.status);return await res.json();}catch(e){if(to)clearTimeout(to);const msg=String((e&&e.message)||e);if(e&&e.name==='AbortError')throw new Error('timeout');if(msg.indexOf('timeout')>=0)throw new Error('timeout');return await frameGet(params,Math.min(ms,20000));}}
+async function apiGet(params,timeoutMs,signal,noFrame){const ms=timeoutMs||10000;const ctrl=(signal)||(('AbortController'in window)?new AbortController():null);const to=ctrl?setTimeout(function(){try{ctrl.abort();}catch(e){}},ms):null;try{const res=await fetch(API_URL+'?'+new URLSearchParams(params).toString(),{method:'GET',redirect:'follow',cache:'no-store',signal:ctrl?ctrl.signal:undefined});if(to)clearTimeout(to);if(!res.ok)throw new Error('HTTP '+res.status);return await res.json();}catch(e){if(to)clearTimeout(to);const msg=String((e&&e.message)||e);if(e&&e.name==='AbortError')throw new Error('timeout');if(msg.indexOf('timeout')>=0)throw new Error('timeout');if(noFrame)throw e;return await frameGet(params,Math.min(ms,20000));}}
 async function apiGetRetry(params,timeoutMs,retries){retries=retries||3;let lastErr=null;for(let i=1;i<=retries;i++){try{return await apiGet(params,timeoutMs);}catch(e){lastErr=e;if(i<retries)await new Promise(function(r){setTimeout(r,800*i);});}}throw lastErr;}
 async function postJSON(payload){try{const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});if(!res.ok)throw new Error('HTTP '+res.status);return await res.json();}catch(e){try{await fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});return {ok:true,blind:true};}catch(e2){throw e;}}}
 let _tarifasSucias=false;
@@ -1830,9 +1841,9 @@ function marcarTodasLeidas(){const db=getDB();(db.notifications||[]).forEach(fun
 function mapearRolSheets(rolCrudo){const r=normKey(rolCrudo||'');if(['admin','administracion','administración','jefe','gerente'].indexOf(r)>=0)return 'admin';if(['dueno','dueño','dueÃ±o','owner','propietario'].indexOf(r)>=0)return 'dueño';if(['ruteador','ruteadora','mapa','planificador','routing'].indexOf(r)>=0)return 'ruteador';if(['cliente','customer','cliente_final'].indexOf(r)>=0)return 'cliente';if(['tienda','local','comercio'].indexOf(r)>=0)return 'tienda';if(['delivery','motorizado','moto','repartidor','courier','driver'].indexOf(r)>=0)return 'delivery';return 'delivery';}
 function setLoginError(msg){const el=document.getElementById('loginError');if(el){el.textContent=msg||'';el.classList.toggle('visible',!!msg);}}
 function prewarmBridge(){try{fetch(API_URL+'?action=ping&_='+Date.now(),{cache:'no-store',mode:'no-cors'}).catch(function(){});}catch(e){}}
-async function doLogin(){setLoginError('');const btn=document.getElementById('loginBtn');const pass=document.getElementById('loginPass').value;const emailInput=document.getElementById('loginEmail');const email=emailInput?normEmail(emailInput.value):'';if(!email){setLoginError('Ingresá tu email');return;}if(!pass){setLoginError('Ingresá tu contraseña');return;}let _cacheHit=null;try{const _d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(email+'|'+pass));const _h=Array.from(new Uint8Array(_d)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');const _cc=JSON.parse(localStorage.getItem('jagi_auth_cache_v1')||'{}');const _c=_cc[normEmail(email)];if(_c&&_c.pwdHash===_h&&_c.user)_cacheHit=_c;}catch(e){}if(_cacheHit){const _me=_cacheHit.user||{};currentUser=_me;currentUser.role=mapearRolSheets(currentUser.role);document.getElementById('loginScreen').style.display='none';aplicarAppSegunRol();suscribirSyncInstantaneo();setSyncIndicator('ok');saveSession(_me,_cacheHit.state||{});startSyncLoop();showToast('Bienvenido de vuelta, '+(_me.name||''),'success');if(btn){btn.disabled=false;btn.textContent='Iniciar Sesión';}if(_cacheHit.state){try{stateFromAPI(_cacheHit.state);reapplyPendingOps();}catch(e){}}setTimeout(function(){pullState({after:function(){if(!currentUser)return;renderAllActive();aplicarAppSegunRol();}});},400);return;}if(btn){btn.disabled=true;btn.textContent='Conectando…';}const t0=Date.now();const prog=setInterval(function(){const s=Math.round((Date.now()-t0)/1000);if(btn&&btn.disabled)btn.textContent='Conectando… '+s+'s';},1000);try{const passVariantes=[pass];if(/^0+\d+$/.test(pass)){passVariantes.push(pass.replace(/^0+/,''));}else if(/^\d+$/.test(pass)){passVariantes.push('0'+pass);}let data=null;for(let vi=0;vi<passVariantes.length&&!data;vi++){const pv=passVariantes[vi];for(let i=1;i<=2;i++){try{const r=await apiGet({action:'login',email:email,password:pv},8000);if(r&&r.ok){data=r;if(pv!==pass)console.log('Login OK con variante de contraseña (cero a la izquierda normalizado)');}break;}catch(e){console.warn('login variante '+(vi+1)+' intento '+i+':',e.message);if(i<2)await new Promise(function(r2){setTimeout(r2,600);});}}}if(!data||!data.ok){setLoginError((data&&data.error)||'Contraseña incorrecta o usuario inexistente en la hoja Usuarios.');return;}const st=data.state||data.data||data.estado||null;if(st&&(st.Usuarios||st.users)){stateFromAPI(st);}else{try{const _lt0=Date.now();/* la lectura post-login usaba 15 s fijos: con una planilla que tarda
+async function doLogin(){setLoginError('');const btn=document.getElementById('loginBtn');const pass=document.getElementById('loginPass').value;const emailInput=document.getElementById('loginEmail');const email=emailInput?normEmail(emailInput.value):'';if(!email){setLoginError('Ingresá tu email');return;}if(!pass){setLoginError('Ingresá tu contraseña');return;}let _cacheHit=null;try{const _d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(email+'|'+pass));const _h=Array.from(new Uint8Array(_d)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');const _cc=JSON.parse(localStorage.getItem('jagi_auth_cache_v1')||'{}');const _c=_cc[normEmail(email)];if(_c&&_c.pwdHash===_h&&_c.user)_cacheHit=_c;}catch(e){}if(_cacheHit){const _me=_cacheHit.user||{};currentUser=_me;currentUser.role=mapearRolSheets(currentUser.role);document.getElementById('loginScreen').style.display='none';aplicarAppSegunRol();suscribirSyncInstantaneo();setSyncIndicator('ok');saveSession(_me,_cacheHit.state||{});startSyncLoop();showToast('Bienvenido de vuelta, '+(_me.name||''),'success');if(btn){btn.disabled=false;btn.textContent='Iniciar Sesión';}if(_cacheHit.state){try{stateFromAPI(_cacheHit.state);reapplyPendingOps();}catch(e){}}setTimeout(function(){pullState({after:function(){if(!currentUser)return;renderAllActive();aplicarAppSegunRol();}});},400);return;}if(btn){btn.disabled=true;btn.textContent='Conectando…';}const t0=Date.now();const prog=setInterval(function(){const s=Math.round((Date.now()-t0)/1000);if(btn&&btn.disabled)btn.textContent='Conectando… '+s+'s';},1000);try{const LOGIN_TIMEOUT_MS=25000;const passVariantes=[pass];if(/^0+\d+$/.test(pass)){passVariantes.push(pass.replace(/^0+/,''));}else if(/^\d+$/.test(pass)){passVariantes.push('0'+pass);}let data=null;let credErr='';for(let vi=0;vi<passVariantes.length&&!data&&!credErr;vi++){const pv=passVariantes[vi];try{const r=await apiGet({action:'login',email:email,password:pv},LOGIN_TIMEOUT_MS,null,true);if(r&&r.ok){data=r;if(pv!==pass)console.log('Login OK con variante de contraseña (cero a la izquierda normalizado)');}else if(r&&r.ok===false){credErr=(r.error&&String(r.error))||'Contraseña incorrecta o usuario inexistente en la hoja Usuarios.';if(!/^0+\d+$/.test(pass)&&!/^\d+$/.test(pass))break;}}catch(e){console.warn('login variante '+(vi+1)+':',(e&&e.message)||e);}}if(!data){setLoginError(credErr||'No se pudo conectar con la planilla. Revisá internet y que el Web App esté desplegado como "Cualquier persona", y volvé a intentar.');return;}const st=data.state||data.data||data.estado||null;if(st&&(st.Usuarios||st.users)){try{stateFromAPI(st);}catch(e){}}else{(async function(){try{const _lt0=Date.now();/* la lectura post-login usaba 15 s fijos: con una planilla que tarda
      20-40 s el delivery entraba y veia la app VACIA, por eso "no le llegaban los pedidos" */
-     const s2=await apiGet({action:'state'},Math.max(_pullTimeoutMs,PULL_MIN_MS));if(s2&&s2.ok&&s2.data){stateFromAPI(s2.data);_pullPresupuesto(true,Date.now()-_lt0);setSyncIndicator('ok');}}catch(e){console.warn('state post-login falló:',e.message);setSyncIndicator('lento');}}reapplyPendingOps();const db=getDB();const sess=data.session||{};const meId=normEmail(sess.email||email);let me=db.users.find(function(u){return u.id===meId||normEmail(u.email||u.id||'')===meId;});if(!me&&sess.role){me={id:meId,email:sess.email||email,name:sess.name||sess.email||email,role:mapearRolSheets(sess.role),estado:'Activo',telefono:'',cedula:'',fechaIngreso:'',sueldoMensual:0,jornal:0};db.users.push(me);saveDB(db);}if(!me){setLoginError('Tu email no coincide con la columna A de la hoja Usuarios. Usá el email exacto (ej: juan@zoe.com).');return;}if(me.estado&&me.estado!=='Activo'){setLoginError('Tu cuenta está PENDIENTE de aprobación por Administración. Esperá la confirmación.');return;}currentUser=me;currentUser.role=mapearRolSheets(me.role);_lastOrdersSig=ordersSignature(db);saveSession(me,st||{});if(!st){try{const _cc2=JSON.parse(localStorage.getItem('jagi_auth_cache_v1')||'{}');_cc2[normEmail(email)]=_cc2[normEmail(email)]||null;localStorage.setItem('jagi_auth_cache_v1',JSON.stringify(_cc2));}catch(e){}}try{(async function(){const _dd=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(email+'|'+pass));const _hh=Array.from(new Uint8Array(_dd)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');const _c3=JSON.parse(localStorage.getItem('jagi_auth_cache_v1')||'{}');_c3[normEmail(email)]={pwdHash:_hh,user:me,state:st||null,ts:Date.now()};localStorage.setItem('jagi_auth_cache_v1',JSON.stringify(_c3));})();}catch(e){}document.getElementById('loginScreen').style.display='none';aplicarAppSegunRol();suscribirSyncInstantaneo();showToast('Bienvenido, '+currentUser.name,'success');setSyncIndicator('ok');startSyncLoop();setTimeout(function(){pullState({after:function(){if(!currentUser)return;renderAllActive();aplicarAppSegunRol();}});},800);}catch(err){console.error(err);setLoginError('Error de conexión tras 3 intentos: '+(err&&err.message?err.message:String(err))+'. Verificá internet y que el Web App esté desplegado como "Cualquier persona".');}finally{clearInterval(prog);if(btn){btn.disabled=false;btn.textContent='Iniciar Sesión';}}}
+     const s3=await apiGet({action:'state'},Math.max(_pullTimeoutMs,PULL_MIN_MS),null,true);if(s3&&s3.ok&&s3.data){try{stateFromAPI(s3.data);}catch(e2){}_pullPresupuesto(true,Date.now()-_lt0);setSyncIndicator('ok');if(currentUser){try{renderAllActive();aplicarAppSegunRol();}catch(e3){}}}}catch(e){console.warn('state post-login falló:',e.message);setSyncIndicator('lento');}})();}reapplyPendingOps();const db=getDB();const sess=data.session||{};const meId=normEmail(sess.email||email);let me=db.users.find(function(u){return u.id===meId||normEmail(u.email||u.id||'')===meId;});if(!me&&sess.role){me={id:meId,email:sess.email||email,name:sess.name||sess.email||email,role:mapearRolSheets(sess.role),estado:'Activo',telefono:'',cedula:'',fechaIngreso:'',sueldoMensual:0,jornal:0};db.users.push(me);saveDB(db);}if(!me){setLoginError('Tu email no coincide con la columna A de la hoja Usuarios. Usá el email exacto (ej: juan@zoe.com).');return;}if(me.estado&&me.estado!=='Activo'){setLoginError('Tu cuenta está PENDIENTE de aprobación por Administración. Esperá la confirmación.');return;}currentUser=me;currentUser.role=mapearRolSheets(me.role);_lastOrdersSig=ordersSignature(db);saveSession(me,st||{});if(!st){try{const _cc2=JSON.parse(localStorage.getItem('jagi_auth_cache_v1')||'{}');_cc2[normEmail(email)]=_cc2[normEmail(email)]||null;localStorage.setItem('jagi_auth_cache_v1',JSON.stringify(_cc2));}catch(e){}}try{(async function(){const _dd=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(email+'|'+pass));const _hh=Array.from(new Uint8Array(_dd)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');const _c3=JSON.parse(localStorage.getItem('jagi_auth_cache_v1')||'{}');_c3[normEmail(email)]={pwdHash:_hh,user:me,state:st||null,ts:Date.now()};localStorage.setItem('jagi_auth_cache_v1',JSON.stringify(_c3));})();}catch(e){}document.getElementById('loginScreen').style.display='none';aplicarAppSegunRol();suscribirSyncInstantaneo();showToast('Bienvenido, '+currentUser.name,'success');setSyncIndicator('ok');startSyncLoop();setTimeout(function(){pullState({after:function(){if(!currentUser)return;renderAllActive();aplicarAppSegunRol();}});},800);}catch(err){console.error(err);setLoginError('Error de conexión tras 3 intentos: '+(err&&err.message?err.message:String(err))+'. Verificá internet y que el Web App esté desplegado como "Cualquier persona".');}finally{clearInterval(prog);if(btn){btn.disabled=false;btn.textContent='Iniciar Sesión';}}}
 function doLogout(){if(LIVE_ACTIVE)stopLiveTracking();clearSession();cerrarSyncInstantaneo();currentUser=null;_lastNotifCount=-1;_rendSeleccion.clear();_planillaCache={};_deliverysFiltrados.clear();Object.keys(_mejorEstado).forEach(function(k){delete _mejorEstado[k];});if(_syncLoopId){clearInterval(_syncLoopId);_syncLoopId=null;}document.getElementById('loginScreen').style.display='';document.getElementById('appContainer').classList.remove('active');document.getElementById('deliveryApp').classList.remove('active');const le=document.getElementById('loginEmail');if(le)le.value='';document.getElementById('tiendaApp').classList.remove('active');document.getElementById('clientApp').classList.remove('active');document.getElementById('loginPass').value='';setLoginError('');lastSavedTiendaId=null;lastSavedMetodo=null;lastSavedDeliveryId=null;_enFormularioPedido=false;setSyncIndicator('off');}
 function checkSavedSession(){const session=loadSession();if(session&&session.user){currentUser=session.user;currentUser.role=mapearRolSheets(currentUser.role);document.getElementById('loginScreen').style.display='none';aplicarAppSegunRol();suscribirSyncInstantaneo();setSyncIndicator('ok');showToast('Sesión restaurada. Bienvenido, '+currentUser.name,'success');if(session.state){try{stateFromAPI(session.state);reapplyPendingOps();_lastOrdersSig=ordersSignature(_db);renderAllActive();}catch(e){console.warn('Error restaurando estado:',e);}}startSyncLoop();setTimeout(function(){pullState({after:function(){if(!currentUser)return;renderAllActive();aplicarAppSegunRol();}});},500);return true;}return false;}
 // ===== SETUP APP =====
@@ -1846,8 +1857,8 @@ function getDeliverysOptions(filter){const db=getDB();const f=(filter||'').toLow
 function setupSearchableSelect(containerId,searchId,optionsId,hiddenId,getOptionsFn){const container=document.getElementById(containerId);if(!container)return;const input=container.querySelector('.ss-input'),search=document.getElementById(searchId),options=document.getElementById(optionsId),hidden=document.getElementById(hiddenId);if(!input||!search||!options||!hidden)return;input.addEventListener('click',function(e){e.stopPropagation();container.classList.add('open');renderOptions();setTimeout(function(){search.focus();},50);});document.addEventListener('click',function(e){if(!container.contains(e.target))container.classList.remove('open');});search.addEventListener('input',renderOptions);search.addEventListener('click',function(e){e.stopPropagation();});function renderOptions(){const items=getOptionsFn(search.value);if(items.length===0){options.innerHTML='<div class="ss-empty">Sin resultados</div>';return;}options.innerHTML=items.map(function(it){const editBtn=containerId==='ssTienda'?`<button class="btn btn-edit btn-xs" onclick="event.stopPropagation();openEditarTienda('${it.value}')" title="Editar">✏️</button>`:'';return `<div class="ss-option ${hidden.value===it.value?'selected':''}" data-value="${it.value}"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%"><div><div style="font-weight:600">${it.label}</div>${it.sublabel?`<div style="font-size:.75rem;color:var(--gray-500);margin-top:2px">${it.sublabel}</div>`:''}</div>${editBtn}</div></div>`;}).join('');options.querySelectorAll('.ss-option').forEach(function(opt){opt.addEventListener('click',function(e){e.stopPropagation();const val=opt.dataset.value;hidden.value=val;const item=items.find(function(i){return i.value===val;});input.value=item?item.label:'';container.classList.remove('open');search.value='';if(containerId==='ssTienda')onTiendaChange();if(containerId==='ssAsignTienda')renderAsignacion();});});}container.setValue=function(val){hidden.value=val;if(!val){input.value='';return;}const items=getOptionsFn('');const item=items.find(function(i){return i.value===val;});input.value=item?item.label:val;};container.getValue=function(){return hidden.value;};container.clear=function(){hidden.value='';input.value='';};}
 function limpiarFiltroAsignTienda(){const hid=document.getElementById('asignFilterTienda');if(hid)hid.value='';const c=document.getElementById('ssAsignTienda');if(c&&c.clear)c.clear();renderAsignacion(true);}
 // ===== NAVEGACIÓN =====
-function renderAllActive(){if(!currentUser)return;const active=document.querySelector('.page:not(.hidden)');const pid=active?active.id.replace('page-',''):'';const db=getDB();try{populateSelects(db);}catch(e){}try{renderMS('msFilterEstado');renderMS('msFilterDelivery');}catch(e){}if(currentUser.role==='delivery'){renderDeliveryApp();return;}if(currentUser.role==='cliente'){renderClientApp();return;}if(esRolTienda(currentUser.role)){renderTiendaApp();return;}switch(pid){case 'dashboard':renderDashboard(db);break;case 'asignacion':renderAsignacion(true);break;case 'adelantos':renderAdelantos();break;case 'asistencia':renderAsistencia();break;case 'rendicionDelivery':renderRendicionDelivery();break;case 'pedidos':renderPedidos();break;case 'rutas':renderRutas(db);break;case 'adminDashboard':renderAdminDashboard(db);break;case 'rendiciones':renderRendiciones();break;case 'liquidacion':renderLiquidacion();break;case 'personal':renderPersonal(db);break;case 'gastos':renderGastos(db);break;case 'tiendas':renderTiendas(db);break;case 'tarifas':renderTarifas(db);break;case 'liveMap':inicializarFiltrosDeliverys();renderLiveMap(false);break;}}
-function showPage(page){const _sb=document.getElementById('sidebar');if(_sb)_sb.classList.remove('open');const _sov2=document.getElementById('sidebarOverlay');if(_sov2)_sov2.classList.remove('active');const currentActive=document.querySelector('.page:not(.hidden)');const currentPid=currentActive?currentActive.id.replace('page-',''):'';if(currentPid===page){renderAllActive();return;}document.querySelectorAll('.page').forEach(function(p){p.classList.add('hidden');});const el=document.getElementById('page-'+page);if(el)el.classList.remove('hidden');const titles={dashboard:'Dashboard',nuevoPedido:'Cargar Pedidos',asignacion:'Asignar',adelantos:'Adelantos',asistencia:'Asistencia',pedidos:'Pedidos',rutas:'Rutas',adminDashboard:'Dashboard',rendiciones:'Rendiciones Tienda',liquidacion:'Liquidación',personal:'Personal',gastos:'Gastos',tiendas:'Tiendas',tarifas:'Tarifas',rendicionDelivery:'Rendición',liveMap:'Mapas'};document.getElementById('pageTitle').textContent=titles[page]||page;const db=getDB();switch(page){case 'dashboard':renderDashboard(db);break;case 'nuevoPedido':_enFormularioPedido=true;resetPedidoForm();break;case 'asignacion':renderAsignacion(true);break;case 'adelantos':renderAdelantos();break;case 'asistencia':renderAsistencia();break;case 'rendicionDelivery':renderRendicionDelivery();break;case 'pedidos':renderPedidos();break;case 'rutas':renderRutas(db);break;case 'adminDashboard':renderAdminDashboard(db);break;case 'rendiciones':aplicarFiltroPagoRendDefault();renderRendiciones();break;case 'liquidacion':renderLiquidacion();break;case 'personal':renderPersonal(db);break;case 'gastos':renderGastos(db);break;case 'tiendas':renderTiendas(db);break;case 'tarifas':renderTarifas(db);break;case 'liveMap':inicializarFiltrosDeliverys();renderLiveMap(true);break;}if(page!=='nuevoPedido')_enFormularioPedido=false;document.getElementById('sidebar').classList.remove('open');const _sov=document.getElementById('sidebarOverlay');if(_sov)_sov.classList.remove('active');}
+function renderAllActive(){if(!currentUser)return;const active=document.querySelector('.page:not(.hidden)');const pid=active?active.id.replace('page-',''):'';const db=getDB();try{populateSelects(db);}catch(e){}try{renderMS('msFilterEstado');renderMS('msFilterDelivery');}catch(e){}if(currentUser.role==='delivery'){renderDeliveryApp();return;}if(currentUser.role==='cliente'){renderClientApp();return;}if(esRolTienda(currentUser.role)){renderTiendaApp();return;}switch(pid){case 'dashboard':renderDashboard(db);break;case 'asignacion':renderAsignacion(true);break;case 'adelantos':renderAdelantos();break;case 'asistencia':renderAsistencia();break;case 'rendicionDelivery':renderRendicionDelivery();break;case 'pedidos':renderPedidos();break;case 'rutas':renderRutas(db);break;case 'pedidosNuevos':renderPedidosNuevos();break;case 'adminDashboard':renderAdminDashboard(db);break;case 'rendiciones':renderRendiciones();break;case 'liquidacion':renderLiquidacion();break;case 'personal':renderPersonal(db);break;case 'gastos':renderGastos(db);break;case 'tiendas':renderTiendas(db);break;case 'tarifas':renderTarifas(db);break;case 'liveMap':inicializarFiltrosDeliverys();renderLiveMap(false);break;}}
+function showPage(page){const _sb=document.getElementById('sidebar');if(_sb)_sb.classList.remove('open');const _sov2=document.getElementById('sidebarOverlay');if(_sov2)_sov2.classList.remove('active');const currentActive=document.querySelector('.page:not(.hidden)');const currentPid=currentActive?currentActive.id.replace('page-',''):'';if(currentPid===page){renderAllActive();return;}document.querySelectorAll('.page').forEach(function(p){p.classList.add('hidden');});const el=document.getElementById('page-'+page);if(el)el.classList.remove('hidden');const titles={dashboard:'Dashboard',nuevoPedido:'Cargar Pedidos',asignacion:'Asignar',adelantos:'Adelantos',asistencia:'Asistencia',pedidos:'Pedidos',pedidosNuevos:'Pedidos Nuevos',rutas:'Rutas',adminDashboard:'Dashboard',rendiciones:'Rendiciones Tienda',liquidacion:'Liquidación',personal:'Personal',gastos:'Gastos',tiendas:'Tiendas',tarifas:'Tarifas',rendicionDelivery:'Rendición',liveMap:'Mapas'};document.getElementById('pageTitle').textContent=titles[page]||page;const db=getDB();switch(page){case 'dashboard':renderDashboard(db);break;case 'nuevoPedido':_enFormularioPedido=true;resetPedidoForm();break;case 'asignacion':renderAsignacion(true);break;case 'adelantos':renderAdelantos();break;case 'asistencia':renderAsistencia();break;case 'rendicionDelivery':renderRendicionDelivery();break;case 'pedidos':renderPedidos();break;case 'rutas':renderRutas(db);break;case 'adminDashboard':renderAdminDashboard(db);break;case 'pedidosNuevos':renderPedidosNuevos();break;case 'rendiciones':aplicarFiltroPagoRendDefault();renderRendiciones();break;case 'liquidacion':renderLiquidacion();break;case 'personal':renderPersonal(db);break;case 'gastos':renderGastos(db);break;case 'tiendas':renderTiendas(db);break;case 'tarifas':renderTarifas(db);break;case 'liveMap':inicializarFiltrosDeliverys();renderLiveMap(true);break;}if(page!=='nuevoPedido')_enFormularioPedido=false;document.getElementById('sidebar').classList.remove('open');const _sov=document.getElementById('sidebarOverlay');if(_sov)_sov.classList.remove('active');}
 function toggleSidebarCollapse(){document.body.classList.toggle('sidebar-collapsed');}
 document.addEventListener('keydown',function(e){if(e.key===']'){toggleSidebarCollapse();}});
 function toggleSidebar(){const sidebar=document.getElementById('sidebar');const overlay=document.getElementById('sidebarOverlay');const willOpen=!sidebar.classList.contains('open');sidebar.classList.toggle('open',willOpen);if(overlay)overlay.classList.toggle('active',willOpen);}
@@ -2703,6 +2714,102 @@ function lockTarifasRuteador(){
    NINGUN boton para abrir el pedido: solo el estado y el comprobante. El delivery no
    podia revisar nada de lo que ya habia entregado. */
 function verDetallePedido(pid){const db=getDB();const p=(db.pedidos||[]).find(function(x){return x.id===pid;});if(!p){showToast('Pedido no encontrado','error');return;}const old=document.getElementById('modalDetallePedido');if(old)old.remove();const tienda=(db.tiendas||[]).find(function(t){return t.id===p.tiendaId;})||{};let urlRet='',urlEnt='';try{urlRet=getMapsUrlRetiro(p)||'';}catch(e){}try{urlEnt=getMapsUrlEntrega(p)||'';}catch(e2){}let h='';h+='<div class="modal-overlay active" id="modalDetallePedido"><div class="modal" style="max-width:620px"><div class="modal-header"><h3>Detalle del Pedido '+safeText(p.id)+'</h3><button class="modal-close" onclick="closeModal(\'modalDetallePedido\')">&times;</button></div><div class="modal-body">';h+='<div class="det-item"><span>Estado</span><span class="det-val">'+safeText(p.estado||'-')+'</span></div>';h+='<div class="det-item"><span>Fecha / Hora del pedido</span><span class="det-val">'+safeText((p.fecha||'')+' '+(p.hora||''))+'</span></div>';h+='<div class="det-item"><span>Ventana</span><span class="det-val">'+safeText(p.ventana||'-')+'</span></div>';h+='<div class="det-sep">RETIRO EN TIENDA</div>';h+='<div class="det-item"><span>Tienda</span><span class="det-val">'+safeText(p.tienda||tienda.nombre||'-')+'</span></div>';h+='<div class="det-item"><span>Direccion de retiro</span><span class="det-val">'+safeText(p.dirRetiro||tienda.direccion||'-')+'</span></div>';h+='<div class="det-item"><span>Ciudad de origen</span><span class="det-val">'+safeText(p.ciudadOrigen||tienda.ciudad||'-')+'</span></div>';if(p.telefonoTienda||tienda.telefono)h+='<div class="det-item"><span>Telefono de la tienda</span><span class="det-val">'+safeText(p.telefonoTienda||tienda.telefono)+'</span></div>';if(p.horaRetiro)h+='<div class="det-item"><span>Retirado</span><span class="det-val">'+safeText(p.horaRetiro)+'</span></div>';h+='<div class="det-sep">ENTREGA AL CLIENTE</div>';h+='<div class="det-item"><span>Cliente</span><span class="det-val">'+safeText(p.cliente||'-')+'</span></div>';h+='<div class="det-item"><span>Telefono</span><span class="det-val">'+safeText(p.telefono||'-')+'</span></div>';h+='<div class="det-item"><span>Ciudad de destino</span><span class="det-val">'+safeText(p.ciudad||'-')+'</span></div>';h+='<div class="det-item"><span>Direccion de entrega</span><span class="det-val">'+safeText(p.dirEntrega||'-')+'</span></div>';if(p.horaInicioRuta)h+='<div class="det-item"><span>Inicio de ruta</span><span class="det-val">'+safeText(p.horaInicioRuta)+'</span></div>';if(p.horaEntrega)h+='<div class="det-item"><span>Entregado</span><span class="det-val">'+safeText(p.horaEntrega)+'</span></div>';h+='<div class="det-sep">DINERO</div>';h+='<div class="det-item"><span>Monto del pedido</span><span class="det-val">'+formatGs(p.monto||0)+'</span></div>';h+='<div class="det-item"><span>Costo de envio</span><span class="det-val">'+formatGs(p.costo||0)+'</span></div>';h+='<div class="det-item"><span>Total a cobrar</span><span class="det-val">'+formatGs((p.monto||0)+(p.costo||0))+'</span></div>';h+='<div class="det-item"><span>Metodo de pago</span><span class="det-val">'+safeText(p.metodo||'-')+'</span></div>';if(p.estado==='Entregado'){h+='<div class="det-item"><span>Monto cobrado</span><span class="det-val">'+formatGs(p.montoCobrado||0)+'</span></div>';if(esPagoDelCliente(p.metodo)&&p.pagoA){h+='<div class="det-item"><span>El cliente pago a</span><span class="det-val">'+(p.pagoA==='tienda'?'la TIENDA':'a NOSOTROS (delivery)')+'</span></div>';h+='<div class="det-item"><span>Te corresponde (delivery)</span><span class="det-val">'+formatGs(montoRendDelivery(p))+'</span></div>';h+='<div class="det-item"><span>Rinde a la TIENDA</span><span class="det-val">'+formatGs(montoRendTienda(p))+'</span></div>';}}if(p.obs)h+='<div class="det-item"><span>Observaciones</span><span class="det-val">'+safeText(p.obs)+'</span></div>';if(p.motivo)h+='<div class="det-item"><span>Motivo ('+safeText(p.estado||'')+')</span><span class="det-val">'+safeText(p.motivo)+'</span></div>';if(p.dijoCliente)h+='<div class="det-item"><span>Lo que dijo el cliente</span><span class="det-val">"'+safeText(p.dijoCliente)+'"</span></div>';if(p.comprobante)h+='<div class="det-item"><span>Comprobante</span><span class="det-val"><a href="'+safeText(p.comprobante)+'" target="_blank" rel="noopener">Ver imagen</a></span></div>';h+='</div><div class="modal-footer">';if(urlRet)h+='<a class="btn btn-secondary" style="width:auto" href="'+urlRet+'" target="_blank" rel="noopener">Mapa retiro</a>';if(urlEnt)h+='<a class="btn btn-secondary" style="width:auto" href="'+urlEnt+'" target="_blank" rel="noopener">Mapa entrega</a>';if(p.telefono)h+='<a class="btn btn-whatsapp" style="width:auto" href="'+waLink(p.telefono)+'" target="_blank" rel="noopener">WhatsApp cliente</a>';h+='<button class="btn btn-primary" style="width:auto" onclick="closeModal(\'modalDetallePedido\')">Cerrar</button></div></div></div>';document.body.insertAdjacentHTML('beforeend',h);}
+/* ========== PANTALLA PEDIDOS NUEVOS (RUTEADORA): lo que cargan las tiendas -> detalle + URL entrega + aceptar/rechazar ========== */
+function pedidosNuevosDeTiendas(db){
+  db=db||getDB();
+  return (db.pedidos||[]).filter(function(p){
+    return p.estado==='Pendiente'&&!p.verificado;
+  }).sort(function(a,b){
+    var ka=(b.fecha||'')+'|'+(b.hora||''), kb=(a.fecha||'')+'|'+(a.hora||'');
+    return ka.localeCompare(kb);
+  });
+}
+function renderPedidosNuevos(){
+  var db=getDB();
+  var cont=document.getElementById('pedidosNuevosList');
+  if(!cont)return;
+  var nuevos=pedidosNuevosDeTiendas(db);
+  var cnt=document.getElementById('pnNuevosCount');
+  if(cnt)cnt.textContent=nuevos.length+(nuevos.length===1?' pedido nuevo':' pedidos nuevos');
+  if(!nuevos.length){cont.innerHTML='<div class="empty-state"><div class="empty-icon">🎉</div><p>No hay pedidos nuevos esperando. Cuando una tienda cargue un pedido, aparece acá.</p></div>';return;}
+  cont.innerHTML=nuevos.map(function(p){
+    var t=(db.tiendas||[]).find(function(x){return x.id===p.tiendaId;})||{};
+    var ue='';
+    try{ue=getMapsUrlEntrega(p)||'';}catch(e){}
+    var btnMap=ue
+      ?'<a href="'+ue+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs" style="margin-top:6px">📍 Ver dónde se entrega (Google Maps)</a>'
+      :(p.dirEntrega?'<a href="'+safeText(p.dirEntrega)+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs" style="margin-top:6px">📍 Ver dónde se entrega</a>':'<button class="btn btn-xs btn-disabled" disabled style="margin-top:6px">📍 Sin link de entrega</button>');
+    return '<div class="delivery-card" style="margin-bottom:12px"><div class="dc-id">'+p.id+' '+badgeEstado(p.estado)+'</div>'
+      +'<div>🏪 '+safeText(p.tienda||t.nombre)+' · 🏙️ '+safeText(p.ciudad)+'</div>'
+      +'<div>👤 '+safeText(p.cliente)+' · 📞 '+safeText(p.telefono||'')+'</div>'
+      +'<div>💰 Monto a cobrar: '+formatGs(p.monto)+' · 🚚 Envío: '+formatGs(p.costo)+' · '+safeText(p.metodo)+'</div>'
+      +'<div>⏰ Rango horario: <strong>'+(p.ventana?safeText(p.ventana):'Todo el día')+'</strong></div>'
+      +(p.obs?'<div>📝 '+safeText(p.obs)+'</div>':'')
+      +btnMap
+      +'<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-sm btn-secondary" onclick="verDetallePedidoNuevo(\''+p.id+'\')">🔍 Ver detalles</button><button class="btn btn-sm btn-success" onclick="aceptarPedidoNuevo(\''+p.id+'\')">✅ Aceptar</button><button class="btn btn-sm btn-danger" onclick="rechazarPedidoNuevo(\''+p.id+'\')">❌ Rechazar</button></div>'
+      +'</div>';
+  }).join('');
+}
+function verDetallePedidoNuevo(pid){
+  var db=getDB();
+  var p=(db.pedidos||[]).find(function(x){return x.id===pid;});
+  if(!p){showToast('Pedido no encontrado','error');return;}
+  var old=document.getElementById('modalDetallePedidoNuevo');
+  if(old)old.remove();
+  var tienda=(db.tiendas||[]).find(function(t){return t.id===p.tiendaId;})||{};
+  var ur='',ue='';
+  try{ur=getMapsUrlRetiro(p)||'';}catch(e){}
+  try{ue=getMapsUrlEntrega(p)||'';}catch(e2){}
+  var h='<div class="modal-overlay active" id="modalDetallePedidoNuevo"><div class="modal" style="max-width:620px"><div class="modal-header"><h3>📥 Detalle del Pedido '+safeText(p.id)+'</h3><button class="modal-close" onclick="closeModal(\'modalDetallePedidoNuevo\')">&times;</button></div><div class="modal-body">';
+  h+='<div class="det-item"><span>Estado</span><span class="det-val">'+badgeEstado(p.estado)+'</span></div>';
+  h+='<div class="det-item"><span>Fecha / Hora del pedido</span><span class="det-val">'+safeText((p.fecha||'')+' '+(p.hora||''))+'</span></div>';
+  h+='<div class="det-item"><span>Rango horario</span><span class="det-val">'+safeText(p.ventana||'Todo el día')+'</span></div>';
+  h+='<div class="det-sep">🏪 RETIRO EN TIENDA</div>';
+  h+='<div class="det-item"><span>Tienda</span><span class="det-val">'+safeText(p.tienda||tienda.nombre||'—')+'</span></div>';
+  h+='<div class="det-item"><span>Ciudad de origen</span><span class="det-val">'+safeText(p.ciudadOrigen||tienda.ciudad||'—')+'</span></div>';
+  h+='<div class="det-item"><span>Dirección de retiro</span><span class="det-val">'+(ur?'<a href="'+ur+'" target="_blank" rel="noopener">📌 Ver retiro en mapa</a>':safeText(p.dirRetiro||tienda.direccion||'—'))+'</span></div>';
+  h+='<div class="det-sep">🎯 ENTREGA AL CLIENTE</div>';
+  h+='<div class="det-item"><span>Cliente</span><span class="det-val">'+safeText(p.cliente)+'</span></div>';
+  h+='<div class="det-item"><span>Teléfono</span><span class="det-val">'+safeText(p.telefono||'—')+'</span></div>';
+  h+='<div class="det-item"><span>Ciudad destino</span><span class="det-val">'+safeText(p.ciudad)+'</span></div>';
+  h+='<div class="det-item"><span>Dónde se entrega (link de Google Maps)</span><span class="det-val">'+(ue?'<a href="'+ue+'" target="_blank" rel="noopener" class="btn btn-maps btn-sm" style="margin-top:4px">📍 TOCCÁ ACÁ para ver el punto exacto de entrega</a>':safeText(p.dirEntrega||'—'))+'</span></div>';
+  h+='<div class="det-item"><span>💰 Monto a cobrar</span><span class="det-val">'+(p.metodo==='Solo Entrega'?'Solo Entrega (0)':formatGs(p.monto))+' · '+safeText(p.metodo)+'</span></div>';
+  h+='<div class="det-item"><span>🚚 Costo de envío</span><span class="det-val">'+formatGs(p.costo||0)+'</span></div>';
+  h+='<div class="det-item"><span>📝 Observaciones</span><span class="det-val">'+safeText(p.obs||'—')+'</span></div>';
+  h+='</div><div class="modal-footer" style="justify-content:flex-start;flex-wrap:wrap"><button class="btn btn-success" style="width:auto" onclick="closeModal(\'modalDetallePedidoNuevo\');aceptarPedidoNuevo(\''+p.id+'\')">✅ Aceptar</button><button class="btn btn-danger" style="width:auto" onclick="closeModal(\'modalDetallePedidoNuevo\');rechazarPedidoNuevo(\''+p.id+'\')">❌ Rechazar</button><button class="btn btn-secondary" style="width:auto;margin-left:auto" onclick="closeModal(\'modalDetallePedidoNuevo\')">Cerrar</button></div></div></div>';
+  document.body.insertAdjacentHTML('beforeend',h);
+}
+function aceptarPedidoNuevo(pid){
+  var db=getDB();
+  var p=(db.pedidos||[]).find(function(x){return x.id===pid;});
+  if(!p)return;
+  if(p.estado!=='Pendiente'||p.verificado){showToast('Este pedido ya fue procesado','info');renderPedidosNuevos();return;}
+  p.verificado=true;p.estado='Verificado';p.ruteadorId=(currentUser&&currentUser.role==='ruteador')?currentUser.id:'';
+  saveDB(db);opUpsert('Pedidos',p.id,p);
+  registrarLog('pedido_aceptado',p.id,{ruteadorId:(currentUser||{}).id});
+  _lastOrdersSig=ordersSignature(db);
+  publicarBeacon();
+  showToast('✅ Pedido '+pid+' aceptado. Ahora asignalo en "Asignar".','success');
+  renderPedidosNuevos();renderNotifList();
+}
+function rechazarPedidoNuevo(pid){
+  var db=getDB();
+  var p=(db.pedidos||[]).find(function(x){return x.id===pid;});
+  if(!p)return;
+  if(p.estado!=='Pendiente'||p.verificado){showToast('Este pedido ya fue procesado','info');renderPedidosNuevos();return;}
+  var motivo=prompt('Motivo del rechazo (se le avisa por WhatsApp al cliente):','');
+  if(motivo===null)return;
+  if(!motivo.trim()){showToast('Debés indicar el motivo','error');return;}
+  p.estado='Cancelado';p.motivo=motivo.trim();
+  saveDB(db);opUpsert('Pedidos',p.id,p);
+  registrarLog('pedido_rechazado',p.id,{ruteadorId:(currentUser||{}).id,motivo:motivo.trim()});
+  _lastOrdersSig=ordersSignature(db);
+  publicarBeacon();
+  var msg='Hola '+p.cliente+'! 👋\nLamentamos informarte que tu pedido *'+p.id+'* fue *RECHAZADO*.\n❌ Motivo: '+motivo.trim()+'\n\nNos disculpamos, tratamos de mejorar cada día. 🙏\n— JAGI Y ZOE DELIVERY';
+  abrirLinkWhatsApp('https://wa.me/'+phoneToWa(p.telefono)+'?text='+encodeURIComponent(msg));
+  showToast('❌ Pedido rechazado. Mensaje enviado al cliente.','info');
+  renderPedidosNuevos();
+}
 function deliveryCardEntrega(p,num,total){total=total||0;const estadoClass=p.estado==='Entregado'?'delivered':p.estado==='Cancelado'?'cancelled':p.estado==='Reagendado'?'rescheduled':p.estado==='En Ruta'?'enroute':p.estado==='Recogido'?'retirado':'pickup';const mapPref=getMapPref();const esEntrega=(p.estado==='En Ruta');const mapUrl=esEntrega?getMapsUrlEntrega(p):getMapsUrlRetiro(p);const tipoLabel=esEntrega?'(Entrega)':'(Retiro)';let statusText='';if(p.estado==='Entregado'){statusText=`✅ Entregado a las ${p.horaEntrega||'-'} | Cobrado: ${formatGs(p.montoCobrado||0)}`;if(esPagoDelCliente(p.metodo)){statusText+=` | 🎁 Pagó a <strong>${p.pagoA==='tienda'?'la TIENDA':'NOSOTROS'}</strong> → Rende: <strong>${p.pagoA==='tienda'?'TIENDA':'DELIVERY'}</strong> ${formatGs(p.pagoA==='tienda'?montoRendTienda(p):montoRendDelivery(p))} · otro 0`;}}else if(p.estado==='Cancelado')statusText=`❌ Cancelado: ${p.motivo||'No se pudo entregar'}`;else if(p.estado==='Reagendado')statusText=`📅 Reagendado: ${p.motivo||'Para otro día'}`;else if(p.estado==='En Ruta')statusText=`🚚 En ruta de entrega`;const horarioDisplay=p.ventana?`<span style="color:#ff9800;font-weight:600">⏰ ${safeText(p.ventana)}</span>`:'<span style="color:#0d47a1;font-weight:600;background:#e3f2fd;padding:2px 8px;border-radius:10px">🔵 Todo el día</span>';const rutaIndicator=(num&&total>1)?`<div style="position:absolute;top:10px;right:10px;background:var(--primary);color:white;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:700">#${num} de ${total}</div>`:'';const mapButton=mapUrl?`<a href="${mapUrl}" target="_blank" rel="noopener" class="btn btn-maps btn-xs">${mapPref==='waze'?'🚗 Waze':'🗺️ Maps'} ${tipoLabel}</a>`:`<button class="btn btn-xs btn-disabled" disabled>🗺️ Sin Link ${tipoLabel}</button>`;const compBtn=p.comprobante?`<a href="${p.comprobante}" target="_blank" rel="noopener" class="btn btn-xs btn-secondary">📎 Comprobante</a>`:'';let actionsBlock='';if(p.estado==='Recogido'){actionsBlock=`<div class="retirado-banner">📦 RETIRADO a las ${safeText(p.horaRetiro||'-')} — esperando confirmación de ruta del ruteador</div><div class="dc-actions"><a href="#" onclick="abrirWhatsAppCliente('${p.id}'); return false;" class="btn btn-whatsapp btn-xs">💬 Cliente</a>${mapButton}${compBtn?' '+compBtn:''}</div>`;}else if(p.estado==='En Ruta'){actionsBlock=`<div class="dc-actions"><a href="#" onclick="abrirWhatsAppCliente('${p.id}'); return false;" class="btn btn-whatsapp btn-xs">💬 Cliente</a>${mapButton}<button class="btn btn-success btn-xs" onclick="openEntregaModal('${p.id}')">✅ Entregar</button>${compBtn?' '+compBtn:''}</div>`;}else if(['Entregado','Cancelado','Reagendado'].includes(p.estado)){const _canc=p.estado==='Cancelado'?`<div style="margin-top:8px;padding:10px;border-radius:10px;background:#fdf2f1;border-left:4px solid #e74c3c"><div style="font-weight:700;color:#c0392b;font-size:.85rem">🗣️ Lo que dijo el cliente</div><div style="font-style:italic;margin-top:4px">“${safeText(p.dijoCliente||'no anotado')}”</div>${p.canceladoPor?`<div style="font-size:.75rem;color:var(--gray-600);margin-top:6px">Anotado por ${safeText(p.canceladoPor)} · ${safeText(p.horaCancelado||'')}</div>`:''}</div><div class="dc-actions"><button class="btn btn-xs btn-whatsapp" onclick="reenviarAvisoCancelacion('${p.id}','tienda')">🏪 Reenviar a tienda</button><button class="btn btn-xs btn-whatsapp" onclick="reenviarAvisoCancelacion('${p.id}','cliente')">👤 Reenviar a cliente</button></div>`:'';actionsBlock=`<div style="font-size:.82rem;color:var(--gray-600);margin-top:8px">${statusText}</div>${_canc}<div class="dc-actions"><button class="btn btn-xs btn-secondary" onclick="verDetallePedido('${p.id}')">🔍 Ver detalle</button>${compBtn||''}</div>`;}else{/* RETIRO PENDIENTE: avisa a la TIENDA */const _t=(getDB().tiendas||[]).find(function(t){return t.id===p.tiendaId;});const _tel=_t&&_t.telefono;const _qn=(currentUser&&currentUser.name)||'el delivery';const _msg='Hola! Soy '+_qn+' de *JAGI Y ZOE DELIVERY* 🏍️. Voy en camino a retirar el pedido de *'+(p.cliente||'sin cliente')+'* (Pedido '+p.id+'). Te aviso al llegar. ¡Gracias! 🙏';const _btn=_tel?`<a href="${waLink(_tel,_msg)}" target="_blank" rel="noopener" class="btn btn-whatsapp btn-xs">💬 Tienda (retiro)</a>`:`<a href="#" onclick="abrirWhatsAppCliente('${p.id}'); return false;" class="btn btn-whatsapp btn-xs">💬 Cliente</a>`;actionsBlock=`<div class="dc-actions">${_btn}${mapButton}${compBtn?' '+compBtn:''}</div>`;}return `<div class="delivery-card ${estadoClass}" style="position:relative">${rutaIndicator}<div class="dc-header"><div><div class="dc-id">${safeText(p.id)}</div><div class="dc-store">${safeText(p.tienda)}</div><div class="dc-client">👤 ${safeText(p.cliente)}</div></div>${badgeEstado(p.estado)}${p.estado==='Recogido'?' <span class="badge badge-pickedup">📦 RETIRADO</span>':''}</div><div class="dc-info"><span>📍 ${safeText(p.ciudad)} - ${safeText(p.dirEntrega)}</span><span>💰 Cobrar: <strong>${p.monto>0?formatGs(p.monto):'Solo Entrega (0 Gs.)'}</strong> (${safeText(p.metodo)})</span>${horarioDisplay}${p.obs?`<span>📝 ${safeText(p.obs)}</span>`:''}${p.horaInicioRuta?`<span style="color:var(--primary);font-weight:600">🚚 Ruta iniciada: ${safeText(p.horaInicioRuta)}</span>`:''}</div>${actionsBlock}</div>`;}
 
 /* ---------- RESET PARCIAL (mantener TIENDA + DELIVERY): redefine saveAndAddAnother ---------- */
@@ -3140,7 +3247,7 @@ function renderClientApp(){
   var db=getDB();
   var ubi=ubicacionPropiaCliente();
   var propia=ubi.tienda;
-  var conUbic=tieneUbicacionPropiaCliente();
+  var conUbic=!!tiendaDeClienteActual();
 
   /* --- Origen del pedido: si el cliente ya registró su ubicacion, el mismo es
      la tienda y NO tiene que elegirla en cada pedido. --- */
@@ -3154,7 +3261,7 @@ function renderClientApp(){
       oi.innerHTML='<div style="font-weight:700">🏪 Origen de tus pedidos: '+safeText(propia.nombre||currentUser.name)+'</div>'
         +'<div>🏙️ Ciudad: '+safeText(ubi.ciudad)+'</div>'
         +(ubi.direccion?'<div>📍 '+safeText(ubi.direccion)+'</div>':'')
-        +'<div><a href="'+wa+'" target="_blank" rel="noopener">🔗 Ver en Google Maps</a></div>'
+        +(isGoogleMapsUrl(ubi.urlMaps)?'<div><a href="'+wa+'" target="_blank" rel="noopener">🔗 Ver en Google Maps</a></div>':'')
         +'<div style="margin-top:6px;font-weight:700">👤 Cliente final: '+safeText(currentUser.name)+'</div>'
         +'<div>📞 '+safeText(currentUser.telefono||'')+'</div>';
     }else{
@@ -3164,7 +3271,7 @@ function renderClientApp(){
         return '<option value="'+t.id+'">'+safeText(t.nombre)+' ('+safeText(t.ciudad||'')+')</option>';
       }).join('');
       if(cur)selT.value=cur;
-      oi.innerHTML='<div style="color:var(--danger);font-weight:700">⚠️ Todavía no tenés registrada tu ubicación de retiro</div>'
+      oi.innerHTML='<div style="color:var(--danger);font-weight:700">⚠️ Todavía no tenés asociada tu tienda</div>'
         +'<div>Registrala una vez y después tus pedidos ya no te van a pedir elegir tienda.</div>'
         +'<button type="button" class="btn btn-primary btn-xs" style="margin-top:8px" onclick="abrirDatosCliente()">📍 Registrar mi ubicación ahora</button>';
     }
@@ -3183,6 +3290,7 @@ function renderClientApp(){
   if(eV)eV.classList.remove('visible');
   onClienteMetodoChange();
   renderClienteDatos();
+  renderClienteTarifas();
 
   /* --- Mis pedidos: con rango horario (antes no se veia) --- */
   var mis=(db.pedidos||[]).filter(function(p){return p.clienteEmail===currentUser.id||p.telefono===currentUser.telefono;}).sort(function(a,b){return b.id.localeCompare(a.id);});
@@ -3214,10 +3322,11 @@ function renderClientApp(){
   if(e)e.preventDefault();
   var db=getDB();
   var propia=tiendaDeClienteActual();
-  var conUbic=tieneUbicacionPropiaCliente();
+  var conUbic=!!tiendaDeClienteActual();
   /* Con la ubicación registrada el origen es el mismo cliente: no se elige
      tienda en cada pedido. Sin ella se cae al selector, como antes. */
   var tiendaId=(conUbic&&propia)?propia.id:(document.getElementById('cTienda')||{}).value;
+  if(tiendaId)guardarTiendaDeCliente(tiendaId);
   var cliente=(document.getElementById('cCliente').value||'').trim()||currentUser.name;
   var telefono=(document.getElementById('cTelefono').value||'').trim()||currentUser.telefono;
   var ciudad=document.getElementById('cCiudad').value;
@@ -3334,6 +3443,59 @@ function renderTiendaTarifas(){
   _h+='<div style="font-size:.8rem;color:var(--gray-600);margin-top:10px">🎨 Querés el flyer de esta ciudad? Tocá <strong>Generar Flyer</strong> y elegí <strong>'+origen+'</strong>.</div>';
   _tm.innerHTML=_h;
 }
+/* ---------- TARIFAS ARRIBA DE TODO EN EL CLIENTE + FLYER POR CIUDAD (como en tiendas/ruteadoras) ---------- */
+function renderClienteTarifas(){
+  var db=getDB();
+  var sel=document.getElementById('clientCiudadOrigen');
+  if(!sel)return;
+  var miT=tiendaDeClienteActual()||{};
+  var porDefecto=miT.ciudad||(currentUser&&currentUser.ciudad)||CIUDADES[0];
+  var cur=sel.value||porDefecto||CIUDADES[0];
+  if(cur&&CIUDADES.indexOf(cur)<0)CIUDADES.push(cur);
+  sel.innerHTML=CIUDADES.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
+  sel.value=(cur&&CIUDADES.indexOf(cur)>=0)?cur:(CIUDADES[0]||'');
+  var origen=sel.value||CIUDADES[0];
+  var tm=document.getElementById('tarifaMatrixCliente');
+  if(!tm)return;
+  var h='<div class="table-responsive"><table><thead><tr><th>Destino</th><th>Tarifa</th></tr></thead><tbody>';
+  CIUDADES.forEach(function(d){
+    var v=(db.tarifas[origen]&&db.tarifas[origen][d]);
+    var esPropia=(d===origen);
+    h+='<tr'+(esPropia?' style="background:#fff8e1;font-weight:700"':'')+'><td>'+d+(esPropia?' <span class="badge badge-pago-pend">Misma ciudad</span>':'')+'</td><td class="currency" style="text-align:right">'+(v?formatGs(v):'<span style="color:var(--gray-400)">No definido</span>')+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  tm.innerHTML=h;
+  prepararFlyerCiudad(origen);
+}
+function onClienteCiudadOrigenChange(){renderClienteTarifas();}
+function onClienteTiendaSeleccionada(){
+  var selT=document.getElementById('cTienda');
+  var tid=selT?selT.value:'';
+  if(tid)guardarTiendaDeCliente(tid);
+  renderClienteTarifas();
+  renderClientApp();
+}
+var _flyerCiudadPrevia='';
+function prepararFlyerCiudad(ciudad){
+  if(!ciudad)return;
+  var sel=document.getElementById('flyerCiudadOrigen');
+  if(!sel)return;
+  if(sel.options.length!==CIUDADES.length+1){
+    sel.innerHTML='<option value="">Seleccionar ciudad de origen...</option>'+CIUDADES.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
+  }
+  sel.value=ciudad;
+  if(_flyerCiudadPrevia===ciudad)return;
+  _flyerCiudadPrevia=ciudad;
+  ensureFlyerLogo(function(){previewFlyer();});
+}
+function abrirModalFlyerCliente(){
+  var origen=(document.getElementById('clientCiudadOrigen')||{}).value||CIUDADES[0];
+  if(_flyerCiudadPrevia===origen)previewFlyer();else prepararFlyerCiudad(origen);
+  openModal('modalFlyer');
+  var overlay=document.getElementById('modalFlyer');
+  if(overlay){overlay.style.alignItems='';overlay.style.justifyContent='';overlay.style.padding='';}
+  setTimeout(function(){ensureFlyerLogo(function(){previewFlyer();});},60);
+}
 function renderTiendaApp(){if(!currentUser||!esRolTienda(currentUser.role))return;var db=getDB();document.getElementById('tiendaWelcome').textContent='Hola, '+currentUser.name+' · '+hoyLocal();var mis=pedidosDeTiendaActual().sort(function(a,b){return b.id.localeCompare(a.id);});document.getElementById('tStatTotal').textContent=mis.length;document.getElementById('tStatEntr').textContent=mis.filter(function(p){return p.estado==='Entregado';}).length;document.getElementById('tStatPend').textContent=mis.filter(function(p){return !['Entregado','Cancelado'].includes(p.estado);}).length;
 renderTiendaTarifas();document.getElementById('tiendaPedidosList').innerHTML=mis.length?mis.map(function(p){var _urlR=getMapsUrlRetiro(p),_urlE=getMapsUrlEntrega(p);var _links='';if(_urlR)_links+='<a href="'+_urlR+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs">🗺️ Google Maps Retiro</a> ';if(_urlE)_links+='<a href="'+_urlE+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs">🗺️ Google Maps Entrega</a>';return '<div class="delivery-card" style="margin-bottom:10px"><div class="dc-id">'+p.id+' '+badgeEstado(p.estado)+'</div><div>👤 '+safeText(p.cliente)+' · 📍 '+safeText(p.ciudad)+'</div><div>💰 '+formatGs(p.monto)+' · '+safeText(p.metodo)+(esPagoDelCliente(p.metodo)?' \u{1F381} El cliente pag\u00F3 a <strong>'+(p.pagoA==='tienda'?'la TIENDA':'NOSOTROS')+'</strong> \u{1F44D} te corresponde <strong>'+formatGs(montoRendTienda(p))+'</strong>':'')+'</div><div>⏰ Rango horario: <strong>'+(p.ventana?safeText(p.ventana):'Todo el día')+'</strong></div>'+(_links?'<div style="margin-top:6px">'+_links+'</div>':'')+(p.motivo?'<div style="color:var(--danger);font-weight:600">📝 '+safeText(p.motivo)+'</div>':'')+(p.dijoCliente?'<div style="color:var(--danger);font-style:italic;padding-left:10px;border-left:3px solid #e74c3c">🗣️ “'+safeText(p.dijoCliente)+'”</div>':'')+'</div>';}).join(''):'<div class="empty-state"><p>Sin pedidos aún.</p></div>';
 var notifs=(db.notifications||[]).filter(function(n){var p=db.pedidos.find(function(x){return x.id===n.pedidoId;});return p&&mis.some(function(m){return m.id===p.id;});}).slice(0,30);
@@ -3369,12 +3531,32 @@ function tiendaDeClienteActual(){
   if(u.tiendaId){
     var t=lista.find(function(x){return x.id===u.tiendaId;});
     if(t)return t;
+    /* La tienda apuntada ya no existe: se re-detecta. */
+    u.tiendaId='';
   }
-  /* Respaldo: una tienda con el mismo email que el usuario (por si se creo
-     antes de que existiera tiendaId). */
+  /* Respaldo 1: una tienda con el mismo email que el usuario. */
   var t2=lista.find(function(x){return normEmail(x.email||'')===normEmail(u.email||u.id||'');});
-  if(t2){ u.tiendaId=t2.id; return t2; }
+  if(t2){guardarTiendaDeCliente(t2.id);return t2;}
+  /* Respaldo 2: una sola tienda cuyo nombre contenga el nombre del usuario
+     (o al reves): asi un cliente-tienda creado antes de tiendaId queda solo. */
+  var b=normKey(u.name||'');
+  var matches=lista.filter(function(x){
+    var a=normKey(x.nombre||'');
+    return a&&b&&(a.indexOf(b)>=0||b.indexOf(a)>=0);
+  });
+  if(matches.length===1){guardarTiendaDeCliente(matches[0].id);return matches[0];}
   return null;
+}
+
+/* Asocia la tienda al usuario y la guarda en la columna tiendaId de Usuarios.
+   Es un upsert por nombre de columna: solo escribe tiendaId, no pisa el resto. */
+function guardarTiendaDeCliente(tid){
+  if(!currentUser||!tid)return;
+  if(currentUser.tiendaId===tid)return;
+  currentUser.tiendaId=tid;
+  var db=getDB();var f=db.users.find(function(x){return x.id===currentUser.id;});
+  if(f){f.tiendaId=tid;saveDB(db);}
+  opUpsert('Usuarios',currentUser.id,{tiendaId:tid});
 }
 
 function tieneUbicacionPropiaCliente(){
@@ -3768,7 +3950,7 @@ function botonesCambioMetodoCliente(p){
   return '';
 }
 /* #### FIN ZOE v7 #### */
-function abrirTarifasCliente(){var db=getDB();var html='<div style="padding:8px 10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--gray-200);margin:-8px -10px 12px"><label style="font-size:.85rem;margin:0">🔎 Buscar ciudad:</label><input type="text" id="cliTarBuscar" oninput="filtrarTarifasCliente()" placeholder="Origen o destino (Ej: Luque)..." style="max-width:280px"><button class="btn btn-sm btn-whatsapp" onclick="closeModal(\'modalTarifasCliente\');abrirModalFlyer();" style="margin-left:auto">🎨 Generar Flyer</button></div><div class="tarifa-matrix"><table><thead><tr><th>Origen \\ Destino</th>';CIUDADES.forEach(function(c){html+='<th>'+c+'</th>';});html+='</tr></thead><tbody>';CIUDADES.forEach(function(o){html+='<tr><td><strong>'+o+'</strong></td>';CIUDADES.forEach(function(d){var v=(db.tarifas[o]&&db.tarifas[o][d])||0;html+='<td style="text-align:center;padding:6px">'+(v?formatGs(v):'-')+'</td>';});html+='</tr>';});html+='</tbody></table></div>';var ex=document.getElementById('modalTarifasCliente');if(ex)ex.remove();var h='<div class="modal-overlay active" id="modalTarifasCliente"><div class="modal" style="max-width:900px"><div class="modal-header"><h3>💲 Tarifas de Envío por Ciudad</h3><button class="modal-close" onclick="closeModal(\'modalTarifasCliente\')">×</button></div><div class="modal-body" style="max-height:70vh;overflow:auto">'+html+'</div></div></div>';document.body.insertAdjacentHTML('beforeend',h);}
+function abrirTarifasCliente(){var db=getDB();var html='<div style="padding:8px 10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--gray-200);margin:-8px -10px 12px"><label style="font-size:.85rem;margin:0">🔎 Buscar ciudad:</label><input type="text" id="cliTarBuscar" oninput="filtrarTarifasCliente()" placeholder="Origen o destino (Ej: Luque)..." style="max-width:280px"><button class="btn btn-sm btn-whatsapp" onclick="closeModal(\'modalTarifasCliente\');abrirModalFlyerCliente();" style="margin-left:auto">🎨 Generar Flyer</button></div><div class="tarifa-matrix"><table><thead><tr><th>Origen \\ Destino</th>';CIUDADES.forEach(function(c){html+='<th>'+c+'</th>';});html+='</tr></thead><tbody>';CIUDADES.forEach(function(o){html+='<tr><td><strong>'+o+'</strong></td>';CIUDADES.forEach(function(d){var v=(db.tarifas[o]&&db.tarifas[o][d])||0;html+='<td style="text-align:center;padding:6px">'+(v?formatGs(v):'-')+'</td>';});html+='</tr>';});html+='</tbody></table></div>';var ex=document.getElementById('modalTarifasCliente');if(ex)ex.remove();var h='<div class="modal-overlay active" id="modalTarifasCliente"><div class="modal" style="max-width:900px"><div class="modal-header"><h3>💲 Tarifas de Envío por Ciudad</h3><button class="modal-close" onclick="closeModal(\'modalTarifasCliente\')">×</button></div><div class="modal-body" style="max-height:70vh;overflow:auto">'+html+'</div></div></div>';document.body.insertAdjacentHTML('beforeend',h);}
 function filtrarTarifasCliente(){var q=(document.getElementById('cliTarBuscar').value||'').toLowerCase();var tb=document.querySelector('#cliTarifasBody tbody, #modalTarifasCliente .tarifa-matrix tbody');if(!tb)return;Array.from(tb.rows).forEach(function(r){var rowText=(r.textContent||'').toLowerCase();r.style.display=!q||rowText.includes(q)?'':'none';});}
 /* #### FIN ZOE v6 #### */
 function renderPanelSolicitudes(){var db=getDB();var box=document.getElementById('solPendientesBody');var cnt=document.getElementById('solPendientesCount');if(!box)return;var pend=(db.notifications||[]).filter(function(n){return n.type==='solicitud_rendicion'&&n.handled!=='aprobado'&&n.handled!=='rechazado';}).sort(function(a,b){return b.ts-a.ts;});/* ocultar el cuadro si no hay solicitudes */var card=box.closest('.card');if(card){card.style.display=pend.length>0?'':'none';}if(cnt){cnt.textContent='('+pend.length+') pendientes';cnt.className='badge '+(pend.length?'badge-pago-pend':'badge-delivered');}box.innerHTML=pend.length?pend.map(function(n){var tienda=(db.tiendas||[]).find(function(t){return t.nombre===n.tienda||t.nombre===(n.tienda||'').replace(/^\s*|\s*$/g,'');})||null;var pendDeuda=(db.pedidos||[]).filter(function(p){return p.estado==='Entregado'&&(p.estadoPago||'Pendiente a Pagar')!=='Pagado'&&(!tienda||p.tiendaId===tienda.id||p.tienda===(n.tienda||''));}).reduce(function(s,p){return s+Math.max(0,montoRendTienda(p)-(p.costo||0));},0);return '<div class="notif-item priority" style="border-left:4px solid #ff9800"><div class="notif-icon">📩</div><div class="notif-text"><strong>'+(n.tienda||'Tienda')+'</strong> — '+(n.message||'solicita rendición')+'<br><small style="color:var(--danger)">Deuda pendiente aprox: '+formatGs(pendDeuda)+'</small><div class="notif-time">'+fmtAgo(n.ts)+'</div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-xs btn-success" onclick="aprobarSolicitudTienda(\''+n.id+'\')">✅ Aprobar</button><button class="btn btn-xs btn-danger" onclick="rechazarSolicitudTienda(\''+n.id+'\')">❌ Rechazar</button></div></div>';}).join(''):'<div class="empty-state"><div class="empty-icon">🏪</div><p>No hay solicitudes pendientes</p></div>';}
