@@ -343,7 +343,7 @@ body.sidebar-collapsed .main-content{margin-left:0}
 <div class="form-group"><label>Contraseña</label><input type="password" id="loginPass" placeholder="Contraseña" autocomplete="current-password"></div>
 <div class="error-message" id="loginError" style="text-align:center;margin-bottom:12px"></div>
 <button class="btn btn-primary" style="width:100%;padding:14px;font-size:1rem" id="loginBtn" onclick="doLogin()">Iniciar Sesión</button>
-<div style="text-align:center;margin-top:14px"><a href="#" onclick="abrirModalRegistroPublico();return false;" style="color:var(--primary);font-weight:600;font-size:.9rem">🆕 Crear Usuario / Registrarse</a></div>
+<div style="text-align:center;margin-top:14px"><a href="#" onclick="abrirModalRegistroPublico();return false;" style="color:var(--primary);font-weight:600;font-size:.9rem">🆕 Registrarse</a></div>
 </div>
 </div>
 <div class="app-container" id="appContainer">
@@ -739,15 +739,9 @@ body.sidebar-collapsed .main-content{margin-left:0}
 </div>
 <div class="modal-overlay" id="modalRegistroPublico">
 <div class="modal">
-<div class="modal-header"><h3>🆕 Crear Usuario / Registrarse</h3><button class="modal-close" onclick="closeModal('modalRegistroPublico')">×</button></div>
+<div class="modal-header"><h3>🆕 Registrarse</h3><button class="modal-close" onclick="closeModal('modalRegistroPublico')">×</button></div>
 <div class="modal-body">
-<div class="form-group" style="margin-bottom:14px">
-<label>¿Qué sos? *</label>
-<div class="tipo-registro-row">
-<button type="button" class="btn-tipo-registro active" id="btnTipoTienda" onclick="onRegistroTipoChange('tienda')"><span>🏪</span>Tienda</button>
-<button type="button" class="btn-tipo-registro" id="btnTipoCliente" onclick="onRegistroTipoChange('cliente')"><span>🛍️</span>Cliente</button>
-</div>
-</div>
+
 <div class="form-grid">
 <div class="form-group"><label>Nombre *</label><input type="text" id="pubNombre" placeholder="Tu nombre"></div>
 <div class="form-group"><label>Email (login) *</label><input type="email" id="pubEmail" placeholder="nombre@zoe.com"></div>
@@ -762,7 +756,7 @@ body.sidebar-collapsed .main-content{margin-left:0}
 <div class="form-group full-width"><label>🗺️ Link de Google Maps del Retiro *</label><input type="text" id="pubTiendaUrlMaps" placeholder="https://maps.app.goo.gl/..." oninput="validarMapsInput('pubTiendaUrlMaps','errPubTiendaUrlMaps','pubTiendaMapsInfo')"><div class="error-message" id="errPubTiendaUrlMaps">⚠️ El link de Google Maps del retiro es obligatorio</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button type="button" class="btn btn-maps btn-xs" onclick="sugerirLinkMapsDesde('pubTiendaDireccion','pubTiendaUrlMaps')">🔎 Buscar esta dirección en Google Maps</button></div><div class="info-box" id="pubTiendaMapsInfo"></div></div>
 </div>
 <div class="alert-info" id="pubUbicInfo" style="margin-top:12px">📍 Esta ubicación es donde el delivery va a <strong>retirar los pedidos</strong>. <strong>No tenés que elegir tienda: tu usuario ya ES la tienda.</strong></div>
-</div><div class="alert-info" style="margin-top:12px">Tu cuenta quedará <strong>Pendiente de aprobación</strong>. Administración la aprobará y podrás usar el sistema.</div>
+</div><div class="alert-info" style="margin-top:12px">Tu cuenta quedar&#225; <strong>activa de inmediato</strong>: ya vas a poder cargar tus pedidos.</div>
 </div>
 <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modalRegistroPublico')">Cancelar</button><button class="btn btn-primary" style="width:auto" onclick="registrarPublico()">Crear Cuenta</button></div>
 </div>
@@ -774,7 +768,7 @@ body.sidebar-collapsed .main-content{margin-left:0}
 <div class="form-grid">
 <div class="form-group"><label>Nombre *</label><input type="text" id="regNombre"></div>
 <div class="form-group"><label>Email (login) *</label><input type="email" id="regEmail" placeholder="nombre@zoe.com"></div>
-<div class="form-group"><label>Rol *</label><select id="regTipo" onchange="onRegTipoChange()"><option value="cliente">Cliente</option><option value="tienda">Tienda</option><option value="ruteador">Ruteador</option><option value="delivery">Delivery</option></select></div>
+<div class="form-group"><label>Rol *</label><select id="regTipo" onchange="onRegTipoChange()"><option value="tienda">Tienda</option><option value="cliente">Cliente</option><option value="admin">Admin</option><option value="ruteador">Ruteador</option><option value="delivery">Delivery</option></select></div>
 <div class="form-group"><label>Cédula</label><input type="text" id="regCedula"></div>
 <div class="form-group"><label>Teléfono *</label><input type="text" id="regTelefono" placeholder="0981..."></div>
 <div class="form-group"><label>Contraseña *</label><input type="password" id="regPass"></div>
@@ -787,7 +781,7 @@ body.sidebar-collapsed .main-content{margin-left:0}
 </div>
 <div class="alert-info" style="margin-top:12px">📍 Esta ubicación es donde el delivery va a <strong>retirar los pedidos</strong>. No vas a elegir tienda: <strong>tu usuario ya ES la tienda</strong>.</div>
 </div>
-<div class="alert-info" style="margin-top:12px">Tu cuenta quedará <strong>Pendiente de aprobación</strong>. Administración la aprobará y podrás usar el sistema.</div>
+<div class="alert-info" style="margin-top:12px">Tu cuenta quedar&#225; <strong>activa de inmediato</strong>.</div>
 </div>
 <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modalRegistrarCliente')">Cancelar</button><button class="btn btn-primary" style="width:auto" onclick="registrarCliente()">Guardar</button></div>
 </div>
@@ -805,7 +799,6 @@ body.sidebar-collapsed .main-content{margin-left:0}
 </div>
 <div style="display:flex;gap:8px;padding:8px 12px 4px">
 <button class="btn btn-primary" style="flex:1" id="clientTabPedidos" onclick="clientTab('pedidos')">&#128230; Mis Pedidos</button>
-<button class="btn btn-secondary" style="flex:1" id="clientTabRendicion" onclick="clientTab('rendicion')">&#128202; Rendici&#243;n</button>
 </div>
 <div id="clientPanePedidos" style="padding:0 16px 20px">
 <div class="card"><div class="card-header"><h3>🎨 Generar Flyer por Ciudad</h3></div><div class="card-body"><div class="alert-info" style="margin-bottom:12px">Elegí tu ciudad y generá el flyer de tarifas para compartir por WhatsApp o guardar.</div><div class="form-group" style="margin-bottom:12px"><label>🏙️ Ciudad (origen)</label><select id="clientCiudadOrigen" onchange="onClienteCiudadOrigenChange()"></select></div><button class="btn btn-maps" onclick="abrirModalFlyerCliente()">🎨 Generar Flyer</button></div></div>
@@ -847,6 +840,21 @@ body.sidebar-collapsed .main-content{margin-left:0}
 <div class="delivery-stat"><div class="num" id="tStatPend">0</div><div class="lbl">Pendientes</div></div>
 </div>
 <div class="card"><div class="card-header" style="flex-wrap:wrap;gap:10px"><h3>💲 Tarifas de Envío</h3><button class="btn btn-whatsapp btn-sm" onclick="abrirModalFlyer()">🎨 Generar Flyer</button></div><div class="card-body"><div class="alert-info" style="margin-bottom:12px">🎨 Tocá <strong>Generar Flyer</strong> para elegir la ciudad y crear el flyer de tarifas. 🗺️ Los links son <strong>Google Maps</strong>.</div><div class="form-group" style="margin-bottom:12px"><label>🏙️ Ciudad de la Tienda (origen)</label><select id="tiendaCiudadOrigen" onchange="renderTiendaTarifas()"></select></div><div class="tarifa-matrix" id="tarifaMatrixTienda"></div></div></div>
+<div class="card"><div class="card-header"><h3>&#128230; Cargar Pedido</h3></div><div class="card-body">
+<div class="info-box" id="tOrigenInfo"></div>
+<form id="formTiendaPedido" onsubmit="return savePedidoTienda(event)">
+<div class="form-grid">
+<div class="form-group full-width" id="tClienteGroup"><label>&#128100; Cliente final (a quien se le entrega) *</label><input type="text" id="tCliente" placeholder="Nombre del cliente que recibe"></div>
+<div class="form-group" id="tTelGroup"><label>Tel&#233;fono del cliente *</label><input type="text" id="tTelefono" placeholder="0981..."></div>
+<div class="form-group" id="tCiudadGroup"><label>Ciudad destino *</label><select id="tCiudad"></select></div>
+<div class="form-group" id="tMontoGroup"><label>Monto a cobrar *</label><div class="money-input-wrapper"><input type="text" id="tMonto" class="money-input" inputmode="numeric" placeholder="0"></div><div class="info-box" id="tMontoInfo"></div></div>
+<div class="form-group full-width" id="tMapsGroup"><label>Link Google Maps de entrega &#128205; *</label><input type="text" id="tDirEntrega" placeholder="https://maps.app.goo.gl/..." oninput="validarMapsInput('tDirEntrega','errTDirEntrega','tEntregaInfo')"><div class="error-message" id="errTDirEntrega">&#128205; Link de Google Maps (obligatorio)</div><div class="info-box" id="tEntregaInfo"></div></div>
+<div class="form-group" id="tMetodoGroup"><label>M&#233;todo de pago</label><select id="tMetodo" onchange="onTiendaMetodoChange()"><option>Efectivo</option><option>Transferencia</option><option>Solo Entrega</option></select></div>
+<div class="form-group" id="tVentanaGroup"><label>&#128337; Rango Horario *</label><div id="tVentanaRango" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div><input type="hidden" id="tVentana"><div class="error-message" id="errTVentana">Eleg&#237; el rango horario de entrega</div><div class="info-box" id="tVentanaInfo"></div></div>
+<div class="form-group full-width" id="tObsGroup"><label>Observaciones</label><textarea id="tObs" rows="2"></textarea></div>
+</div>
+<button type="submit" id="tEnviarBtn" class="btn btn-primary" style="width:100%;margin-top:16px">&#128228; Enviar Pedido</button>
+</form></div></div>
 <div class="card"><div class="card-header"><h3>🔔 Notificaciones</h3></div><div class="card-body" id="tiendaNotifs" style="padding:0"></div></div>
 <div class="card"><div class="card-header"><h3>📋 Mis Pedidos</h3></div><div class="card-body" id="tiendaPedidosList"></div></div>
 <div class="card"><div class="card-header"><h3>💰 Mi Rendición</h3></div><div class="card-body" style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary" onclick="abrirRendicionTienda()">📄 Ver Mi Rendición</button><button class="btn btn-success" onclick="solicitarRendicionTienda()">📩 Solicitar Rendición</button></div><div class="card-body" style="padding-top:0"><div class="alert-info">📩 <strong>Solicitar Rendición</strong> envía un WhatsApp a <strong>Administración</strong> para que te paguen el saldo pendiente.</div></div></div>
@@ -3200,8 +3208,8 @@ function onRegistroTipoChange(tipo){
   tSel=normalizeMapsUrl(tSel);
   const db=getDB();
   if((db.users||[]).find(function(u){return normEmail(u.email||u.id||'')===email;})){showToast('Ya existe un usuario con ese email','error');return;}
-  const rolFinal=esTienda?'tienda':'cliente';
-  const u={id:email,name:nombre,email:email,role:rolFinal,cedula:'',sueldoMensual:0,jornal:0,fechaIngreso:hoyLocal(),telefono:telefono,estado:'Pendiente',password:pass};
+  const rolFinal='tienda';
+  const u={id:email,name:nombre,email:email,role:rolFinal,cedula:'',sueldoMensual:0,jornal:0,fechaIngreso:hoyLocal(),telefono:telefono,estado:'Activo',password:pass};
   /* Tanto la tienda como el cliente final quedan como ORIGEN de sus pedidos:
      se les crea su fila en Tiendas y el usuario apunta a ella con tiendaId. */
   const tid='t'+Date.now()+Math.random().toString(16).slice(2,6);
@@ -3210,7 +3218,7 @@ function onRegistroTipoChange(tipo){
   db.users.push(u);saveDB(db);opUpsert('Usuarios',u.id,u);syncYa();
   try{addNotification(rolFinal==='tienda'?'nueva_tienda':'nueva_usuario_cliente',u);}catch(e){}
   closeModal('modalRegistroPublico');
-  showToast(rolFinal==='tienda'?'✅ Tienda registrada. Esperá la aprobación de Administración.':'✅ Cuenta creada con tu ubicación. Esperá la aprobación de Administración.','success');
+  showToast('\u{2705} Tienda registrada y activa. Ya pod\u00E9s cargar tus pedidos.','success');
 }function esRolTienda(rol){const r=normKey(rol||'');return ['tienda','local','comercio','store','shop'].indexOf(r)>=0;}
 function aplicarAppSegunRol(){
   const c=document.getElementById('appContainer'),d=document.getElementById('deliveryApp'),t=document.getElementById('tiendaApp'),cl=document.getElementById('clientApp');
@@ -3247,13 +3255,13 @@ function registrarCliente(){
   }
   var db=getDB();
   if(db.users.find(function(u){return u.id===email;})){showToast('Ya existe un usuario con ese email','error');return;}
-  var rolFinal=(tipoRegistro==='tienda')?'tienda':(tipoRegistro==='ruteador'?'ruteador':(tipoRegistro==='delivery'?'delivery':'cliente'));
-  var u={id:email,name:nombre,email:email,role:rolFinal,cedula:(document.getElementById('regCedula')||{}).value||'',sueldoMensual:0,jornal:0,fechaIngreso:hoyLocal(),telefono:telefono,estado:'Pendiente',password:pass};
+  var rolFinal=(tipoRegistro==='tienda')?'tienda':(tipoRegistro==='admin'?'admin':(tipoRegistro==='ruteador'?'ruteador':(tipoRegistro==='delivery'?'delivery':'cliente')));
+  var u={id:email,name:nombre,email:email,role:rolFinal,cedula:(document.getElementById('regCedula')||{}).value||'',sueldoMensual:0,jornal:0,fechaIngreso:hoyLocal(),telefono:telefono,estado:'Activo',password:pass};
   if(tipoRegistro==='tienda'){var tid='t'+Date.now();var tienda={id:tid,nombre:tNombre,contacto:'',telefono:telefono,ciudad:tCiudad,direccion:tDireccion,urlMaps:tSel,email:email};db.tiendas=db.tiendas||[];db.tiendas.push(tienda);u.tiendaId=tid;opUpsert('Tiendas',tienda.id,tienda);}
   db.users.push(u);saveDB(db);opUpsert('Usuarios',u.id,u);syncYa();
   try{addNotification('nueva_usuario_cliente',u);}catch(e){}
   closeModal('modalRegistrarCliente');
-  showToast('✅ Cuenta creada. Esperá la aprobación de Administración.','success');
+  showToast('\u{2705} Cuenta creada y activa de inmediato.','success');
   try{renderPersonal(db);}catch(e){}
 }
 function onRegTipoChange(){var v=document.getElementById('regTipo');var f=document.getElementById('regTiendaFields');if(!v||!f)return;f.classList.toggle('hidden',v.value!=='tienda');if(v.value==='tienda'){var n=document.getElementById('regNombre'),tn=document.getElementById('regTiendaNombre');if(tn&&n&&!tn.value&&n.value)tn.value=n.value;}}
@@ -3529,10 +3537,92 @@ function abrirModalFlyerCliente(){
   if(overlay){overlay.style.alignItems='';overlay.style.justifyContent='';overlay.style.padding='';}
   setTimeout(function(){ensureFlyerLogo(function(){previewFlyer();});},60);
 }
+/* --- Tienda: carga de pedidos (el usuario ES la tienda) ------------------ */
+function onTiendaMetodoChange(){
+  var sel=document.getElementById('tMetodo');
+  var inp=document.getElementById('tMonto');
+  var info=document.getElementById('tMontoInfo');
+  if(!sel||!inp)return;
+  var solo=sel.value==='Solo Entrega';
+  if(solo){
+    if(!inp.dataset.montoPrevio)inp.dataset.montoPrevio=inp.value||'';
+    inp.value='0';
+    inp.readOnly=true;
+    if(info)info.innerHTML='\u{2139}\u{FE0F} Con <b>Solo Entrega</b> no se cobra monto: queda en <b>0</b>.';
+  }else{
+    if(inp.readOnly){inp.value=inp.dataset.montoPrevio||'';inp.dataset.montoPrevio='';inp.readOnly=false;}
+    if(info)info.innerHTML=sel.value==='Efectivo'
+      ? '\u{1F4B5} Con <b>Efectivo</b> te cobramos el monto al cliente.'
+      : '\u{1F3E6} Con <b>Transferencia</b> el cliente paga por transferencia.';
+  }
+}
+function renderTiendaOrdenForm(){
+  if(!currentUser||!esRolTienda(currentUser.role))return;
+  var db=getDB();
+  var t=(currentUser&&empresaDeTienda(currentUser.tiendaId))||null;
+  var oi=document.getElementById('tOrigenInfo');
+  if(oi){
+    if(t){
+      var wa=isGoogleMapsUrl(t.urlMaps)?normalizeMapsUrl(t.urlMaps):'';
+      oi.innerHTML='<div style="font-weight:700">\u{1F3EA} Tu tienda (origen): '+safeText(t.nombre)+'</div>'
+        +'<div>\u{1F3D9}\u{FE0F} Ciudad: '+safeText(t.ciudad||'')+'</div>'
+        +(t.direccion?'<div>\u{1F4CD} '+safeText(t.direccion)+'</div>':'')
+        +(wa?'<div><a href="'+wa+'" target="_blank" rel="noopener">\u{1F517} Ver en Google Maps</a></div>':'');
+    }else{
+      oi.innerHTML='<div style="color:var(--danger);font-weight:700">\u{26A0}\u{FE0F} Tu usuario no tiene una tienda asociada.</div><div>Contact\u00E1 a Administraci\u00F3n para asociar tu tienda.</div>';
+    }
+  }
+  var selC=document.getElementById('tCiudad');
+  if(selC&&!selC.options.length){
+    selC.innerHTML='<option value="">Seleccionar...</option>'+CIUDADES.map(function(c){return '<option>'+safeText(c)+'</option>';}).join('');
+  }
+  setupAllMoneyInputs();
+  var cont=document.getElementById('tVentanaRango');
+  if(cont&&!cont.dataset.done)poblarVentanaRango('t','');
+  onTiendaMetodoChange();
+}
+function savePedidoTienda(e){
+  if(e)e.preventDefault();
+  var db=getDB();
+  var tiendaId=(currentUser&&currentUser.tiendaId)||'';
+  var tienda=tiendaId?db.tiendas.find(function(t){return t.id===tiendaId;}):null;
+  if(!tienda){showToast('\u{26A0}\u{FE0F} Tu usuario no tiene tienda asociada. Contact\u00E1 a Administraci\u00F3n.','error');return false;}
+  var cliente=((document.getElementById('tCliente')||{}).value||'').trim();
+  var telefono=(document.getElementById('tTelefono')||{}).value||'';
+  var ciudad=document.getElementById('tCiudad').value;
+  var dirEntrega=(document.getElementById('tDirEntrega')||{}).value.trim();
+  var monto=getMoneyValue('tMonto');
+  var metodo=document.getElementById('tMetodo').value;
+  var obs=(document.getElementById('tObs')||{}).value.trim();
+  var ventana=normalizarVentana(document.getElementById('tVentana').value);
+  var cl=document.getElementById('tCliente');
+  if(!cliente){if(cl)cl.classList.add('error-field');showToast('Ingres\u00E1 el nombre del cliente final','error');return false;}
+  if(!telefono){var _tf=document.getElementById('tTelefono');if(_tf)_tf.classList.add('error-field');showToast('Ingres\u00E1 el tel\u00E9fono del cliente final','error');return false;}
+  if(!ciudad){showToast('Eleg\u00ED la ciudad de destino','error');return false;}
+  if(!ventana){var _ve=document.getElementById('errTVentana');if(_ve)_ve.classList.add('visible');showToast('\u{1F550} Eleg\u00ED el rango horario de entrega','error');return false;}
+  if(!dirEntrega){showToast('Peg\u00E1 el link de Google Maps de la entrega','error');return false;}
+  if(!isGoogleMapsUrl(dirEntrega)){showToast('La entrega debe ser un LINK de GOOGLE MAPS (no Waze ni direcci\u00F3n escrita)','error');return false;}
+  if(metodo==='Solo Entrega')monto=0;
+  else if(monto<=0){showToast('Ingres\u00E1 el monto a cobrar','error');return false;}
+  var costo=getTarifa(db,tienda.ciudad,ciudad);
+  var dirRetiroFinal=(isGoogleMapsUrl(tienda.urlMaps)?String(tienda.urlMaps).trim():(tienda.direccion||''));
+  var num=String(db.nextPedidoNum).padStart(3,'0');
+  var p={id:'P-'+num,fecha:hoyLocal(),tiendaId:tiendaId,tienda:tienda.nombre,telefonoTienda:tienda.telefono,urlMapsTienda:tienda.urlMaps||'',cliente:cliente,telefono:telefono,clienteEmail:currentUser.id,dirRetiro:dirRetiroFinal,ciudadOrigen:tienda.ciudad||'',ciudad:ciudad,dirEntrega:normalizeMapsUrl(dirEntrega),monto:monto,costo:costo,metodo:metodo,devolucion:false,hora:new Date().toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'}),ventana:ventana,deliveryId:'',delivery:'',ruteadorId:'',estado:'Pendiente',verificado:false,horaEntrega:'',obs:obs,motivo:'',montoCobrado:0,ordenEntrega:0,retirado:false,horaRetiro:'',horaInicioRuta:'',entregadoTs:0,estadoPago:'',comprobante:'',comprobanteNombre:'',comprobanteTs:0,cuentaDestino:'',pagoA:'',pagoATs:0,rendDeliveryCero:false,rendTiendaCero:false,comprobanteVerificado:false,notificadoTienda:false,fechaReagendado:'',capturaReagendado:'',reagendadoPor:'',metodoSolicitado:'',cambioMetodoTs:0,cambioMetodoNota:''};
+  db.pedidos.push(p);db.nextPedidoNum++;saveDB(db);opUpsert('Pedidos',p.id,p);
+  addNotification('nuevo_pedido_cliente',p);
+  registrarLog('pedido_tienda_creado',p.id,{tiendaId:tiendaId});
+  publicarBeacon();
+  showToast('\u{1F4E6} Pedido '+p.id+' enviado. Esper\u00E1 la confirmaci\u00F3n.','success');
+  document.getElementById('formTiendaPedido').reset();
+  var _tm=document.getElementById('tMonto');
+  if(_tm){_tm.dataset.montoPrevio='';_tm.readOnly=false;}
+  renderTiendaApp();
+  return false;
+}
 function renderTiendaApp(){if(!currentUser||!esRolTienda(currentUser.role))return;var db=getDB();document.getElementById('tiendaWelcome').textContent='Hola, '+currentUser.name+' · '+hoyLocal();var mis=pedidosDeTiendaActual().sort(function(a,b){return b.id.localeCompare(a.id);});document.getElementById('tStatTotal').textContent=mis.length;document.getElementById('tStatEntr').textContent=mis.filter(function(p){return p.estado==='Entregado';}).length;document.getElementById('tStatPend').textContent=mis.filter(function(p){return !['Entregado','Cancelado'].includes(p.estado);}).length;
 renderTiendaTarifas();document.getElementById('tiendaPedidosList').innerHTML=mis.length?mis.map(function(p){var _urlR=getMapsUrlRetiro(p),_urlE=getMapsUrlEntrega(p);var _links='';if(_urlR)_links+='<a href="'+_urlR+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs">🗺️ Google Maps Retiro</a> ';if(_urlE)_links+='<a href="'+_urlE+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs">🗺️ Google Maps Entrega</a>';return '<div class="delivery-card" style="margin-bottom:10px"><div class="dc-id">'+p.id+' '+badgeEstado(p.estado)+(p.devolucion?' <span class="badge" style="background:#8e44ad;color:#fff">\u{21A9} Devoluci\u00F3n</span>':'')+'</div><div>👤 '+safeText(p.cliente)+' · 📍 '+safeText(p.ciudad)+'</div><div>💰 '+formatGs(p.monto)+' · '+safeText(p.metodo)+(esPagoDelCliente(p.metodo)?' \u{1F381} El cliente pag\u00F3 a <strong>'+(p.pagoA==='tienda'?'la TIENDA':'NOSOTROS')+'</strong> \u{1F44D} te corresponde <strong>'+formatGs(montoRendTienda(p))+'</strong>':'')+'</div><div>⏰ Rango horario: <strong>'+(p.ventana?safeText(p.ventana):'Todo el día')+'</strong></div>'+(_links?'<div style="margin-top:6px">'+_links+'</div>':'')+(p.motivo?'<div style="color:var(--danger);font-weight:600">📝 '+safeText(p.motivo)+'</div>':'')+(p.dijoCliente?'<div style="color:var(--danger);font-style:italic;padding-left:10px;border-left:3px solid #e74c3c">🗣️ “'+safeText(p.dijoCliente)+'”</div>':'')+'</div>';}).join(''):'<div class="empty-state"><p>Sin pedidos aún.</p></div>';
 var notifs=(db.notifications||[]).filter(function(n){var p=db.pedidos.find(function(x){return x.id===n.pedidoId;});return p&&mis.some(function(m){return m.id===p.id;});}).slice(0,30);
-document.getElementById('tiendaNotifs').innerHTML=notifs.length?notifs.map(function(n){return '<div class="notif-item'+(n.read?'':' unread')+'"><div class="notif-icon">🔔</div><div class="notif-text">'+n.message+'<div class="notif-time">'+fmtAgo(n.ts)+'</div></div></div>';}).join(''):'<div style="padding:16px;color:var(--gray-500)">Sin notificaciones</div>';}
+document.getElementById('tiendaNotifs').innerHTML=notifs.length?notifs.map(function(n){return '<div class="notif-item'+(n.read?'':' unread')+'"><div class="notif-icon">🔔</div><div class="notif-text">'+n.message+'<div class="notif-time">'+fmtAgo(n.ts)+'</div></div></div>';}).join(''):'<div style="padding:16px;color:var(--gray-500)">Sin notificaciones</div>';renderTiendaOrdenForm();}
 function abrirRendicionTienda(){var db=getDB();var mis=pedidosDeTiendaActual();var entregados=mis.filter(function(p){return p.estado==='Entregado';});var totalCobrado=entregados.reduce(function(s,p){return s+montoRendTienda(p);},0);var servicio=entregados.reduce(function(s,p){return s+(p.costo||0);},0);var pend=entregados.filter(function(p){return (p.estadoPago||'Pendiente a Pagar')!=='Pagado';}).reduce(function(s,p){return s+montoRendTienda(p);},0);var html='<div class="rendicion-summary"><div class="rendicion-box"><div class="rb-label">Total Cobrado</div><div class="rb-value">'+formatGs(totalCobrado)+'</div></div><div class="rendicion-box"><div class="rb-label">(-) Servicio</div><div class="rb-value rb-negative">'+formatGs(servicio)+'</div></div><div class="rendicion-box"><div class="rb-label">= Saldo Tienda</div><div class="rb-value rb-positive">'+formatGs(totalCobrado-servicio)+'</div></div><div class="rendicion-box"><div class="rb-label">Pendiente a Pagar</div><div class="rb-value" style="color:#d68910">'+formatGs(pend)+'</div></div></div>';html+='<div class="table-responsive"><table><thead><tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>Monto</th><th>Servicio</th><th>Estado Pago</th></tr></thead><tbody>';html+=entregados.map(function(p){var pago=p.estadoPago||'Pendiente a Pagar';return '<tr><td>'+p.id+'</td><td>'+p.fecha+'</td><td>'+safeText(p.cliente)+'</td><td class="currency">'+formatGs(montoRendTienda(p))+'</td><td class="currency">'+formatGs(p.costo||0)+'</td><td>'+(pago==='Pagado'?'<span class="badge badge-pago-ok">🟢 Pagado</span>':'<span class="badge badge-pago-pend">🟡 Pendiente</span>')+'</td></tr>';}).join('')||'<tr><td colspan="6" style="text-align:center;padding:16px">Sin entregados</td></tr>';html+='</tbody></table></div>';document.getElementById('tiendaRendicionBody').innerHTML=html;openModal('modalRendicionTienda');}
 function solicitarRendicionTienda(){var db=getDB();var mis=pedidosDeTiendaActual();var pend=mis.filter(function(p){return p.estado==='Entregado'&&(p.estadoPago||'Pendiente a Pagar')!=='Pagado';}).reduce(function(s,p){return s+montoRendTienda(p)-(p.costo||0);},0);var n={id:'n'+Date.now(),ts:Date.now(),type:'solicitud_rendicion',pedidoId:'',cliente:currentUser.name,tienda:currentUser.name,ciudad:'',message:'📩 La tienda "'+currentUser.name+'" solicita rendición. Saldo pendiente aprox: '+formatGs(pend)+'.',read:false,ruteadorId:''};db.notifications=db.notifications||[];db.notifications.unshift(n);saveDB(db);opUpsert('Notificaciones',n.id,n);publicarBeacon();showToast('📩 Solicitud de rendición enviada a Administración','success');renderTiendaApp();(function(){var adminUser=db.users.find(function(u){return (u.estado==='Activo'&&esAdminRole(u.role))&&u.telefono;});var adminTel=adminUser?phoneToWa(adminUser.telefono):'';var msg='📩 SOLICITUD DE RENDICIÓN:\nTienda: '+currentUser.name+'\nSaldo pendiente aprox: '+formatGs(pend)+'\nPor favor revisar en Admin.';if(!adminTel){showToast('⚠️ No se encontró el WhatsApp del Administrador','error');return;}window.open('https://wa.me/'+adminTel+'?text='+encodeURIComponent(msg),'_blank');})();}
 /* ==========================================================================
