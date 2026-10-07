@@ -1055,6 +1055,7 @@ body.sidebar-collapsed .main-content{margin-left:0}
 <div class="form-group"><label>Ciudad *</label><select id="etCiudad"><option value="">Seleccionar...</option></select></div>
 <div class="form-group"><label>URL Maps (RETIRO) *</label><input type="url" id="etUrlMaps"></div>
 <div class="form-group full-width"><label>Dirección *</label><input type="text" id="etDireccion"></div>
+<div class="form-group full-width"><label>&#x1F5BC;&#xFE0F; Logo de la tienda <span style="font-weight:400">(opcional)</span></label><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><label class="btn btn-secondary" style="margin:0;cursor:pointer">&#x1F4C1; Elegir / reemplazar logo<input type="file" id="etLogoInput" accept="image/*" style="display:none" onchange="onEditarTiendaLogoChange(this)"></label><div id="etLogoPrev" style="display:none;align-items:center;gap:8px"><img id="etLogoPrevImg" style="height:56px;width:56px;object-fit:contain;border-radius:8px;background:#fff;border:1px solid var(--gray-200)"><button type="button" class="btn btn-danger btn-sm" onclick="quitarTiendaLogoById(document.getElementById('etId').value)">Quitar</button></div></div><small style="color:var(--gray-600);display:block;margin-top:6px">Se adapta sola. Se muestra al lado del nombre de la tienda.</small></div>
 </div>
 </div>
 <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modalEditarTienda')">Cancelar</button><button class="btn btn-primary" style="width:auto" onclick="saveEditarTienda()">💾 Guardar</button></div>
@@ -1921,7 +1922,7 @@ function showFieldError(fieldId,errorId){const field=document.getElementById(fie
 function openNewTiendaFromPedido(){try{document.getElementById('ssTienda').classList.remove('open');}catch(e){}const currentText=document.getElementById('ssTienda').querySelector('.ss-input').value||'';document.getElementById('ntrNombre').value=currentText;openModal('modalNuevaTiendaRapida');}
 function saveNuevaTiendaRapida(){const db=getDB();const nombre=document.getElementById('ntrNombre').value.trim(),telefono=document.getElementById('ntrTelefono').value.trim(),ciudad=document.getElementById('ntrCiudad').value,direccion=document.getElementById('ntrDireccion').value.trim(),urlMaps=document.getElementById('ntrUrlMaps').value.trim();if(!nombre){showToast('Ingresá el nombre','error');return;}if(!telefono){showToast('Ingresá el teléfono','error');return;}if(!ciudad){showToast('Seleccioná la ciudad','error');return;}if(!direccion){showToast('Ingresá la dirección','error');return;}if(!urlMaps){showToast('La URL de Maps es obligatoria','error');return;}const nuevaTienda={id:'t'+Date.now(),nombre:nombre,contacto:'',telefono:telefono,ciudad:ciudad,direccion:direccion,urlMaps:urlMaps};db.tiendas.push(nuevaTienda);saveDB(db);opUpsert('Tiendas',nuevaTienda.id,nuevaTienda);document.getElementById('pTienda').value=nuevaTienda.id;try{document.getElementById('ssTienda').setValue(nuevaTienda.id);}catch(e){const ssInput=document.getElementById('ssTienda').querySelector('.ss-input');if(ssInput)ssInput.value=`${nuevaTienda.nombre} (${nuevaTienda.ciudad})`;}closeModal('modalNuevaTiendaRapida');onTiendaChange();populateSelects(db);showToast(`✅ Tienda "${nombre}" creada`,'success');['ntrNombre','ntrTelefono','ntrDireccion','ntrUrlMaps'].forEach(function(id){const el=document.getElementById(id);if(el)el.value='';});const ntrCiudad=document.getElementById('ntrCiudad');if(ntrCiudad)ntrCiudad.value='';}
 function saveTienda(){const db=getDB();const nombre=document.getElementById('tieNombre').value.trim(),telefono=document.getElementById('tieTelefono').value.trim(),ciudad=document.getElementById('tieCiudad').value,direccion=document.getElementById('tieDireccion').value.trim(),urlMaps=document.getElementById('tieUrlMaps').value.trim();if(!nombre){showToast('Ingresá el nombre','error');return;}if(!telefono){showToast('Ingresá el teléfono','error');return;}if(!ciudad){showToast('Seleccioná la ciudad','error');return;}if(!direccion){showToast('Ingresá la dirección','error');return;}if(!urlMaps){showToast('La URL de Maps es obligatoria','error');return;}const t={id:'t'+Date.now(),nombre:nombre,contacto:'',telefono:telefono,ciudad:ciudad,direccion:direccion,urlMaps:urlMaps};db.tiendas.push(t);saveDB(db);opUpsert('Tiendas',t.id,t);closeModal('modalTienda');showToast('Tienda agregada','success');populateSelects(db);renderTiendas(db);}
-function openEditarTienda(id){const db=getDB();const t=db.tiendas.find(function(x){return x.id===id;});if(!t)return;document.getElementById('etId').value=t.id;document.getElementById('etNombre').value=t.nombre||'';document.getElementById('etTelefono').value=t.telefono||'';document.getElementById('etCiudad').value=t.ciudad||'';document.getElementById('etUrlMaps').value=t.urlMaps||'';document.getElementById('etDireccion').value=t.direccion||'';document.getElementById('etOldDir').value=t.direccion||'';openModal('modalEditarTienda');}
+function openEditarTienda(id){const db=getDB();const t=db.tiendas.find(function(x){return x.id===id;});if(!t)return;document.getElementById('etId').value=t.id;document.getElementById('etNombre').value=t.nombre||'';document.getElementById('etTelefono').value=t.telefono||'';document.getElementById('etCiudad').value=t.ciudad||'';document.getElementById('etUrlMaps').value=t.urlMaps||'';document.getElementById('etDireccion').value=t.direccion||'';document.getElementById('etOldDir').value=t.direccion||'';renderLogoModalPrev(t.id);var etg=document.getElementById('etLogoInput');if(etg)etg.value='';openModal('modalEditarTienda');}
 function saveEditarTienda(){const db=getDB();const id=document.getElementById('etId').value;const t=db.tiendas.find(function(x){return x.id===id;});if(!t)return;const nombre=document.getElementById('etNombre').value.trim(),telefono=document.getElementById('etTelefono').value.trim(),ciudad=document.getElementById('etCiudad').value,direccion=document.getElementById('etDireccion').value.trim(),urlMaps=document.getElementById('etUrlMaps').value.trim(),oldDir=document.getElementById('etOldDir').value;if(!nombre){showToast('Ingresá el nombre','error');return;}if(!telefono){showToast('Ingresá el teléfono','error');return;}if(!ciudad){showToast('Seleccioná la ciudad','error');return;}if(!direccion){showToast('Ingresá la dirección','error');return;}if(!urlMaps){showToast('La URL de Maps es obligatoria','error');return;}t.nombre=nombre;t.telefono=telefono;t.ciudad=ciudad;t.direccion=direccion;t.urlMaps=urlMaps;saveDB(db);opUpsert('Tiendas',t.id,t);closeModal('modalEditarTienda');populateSelects(db);const activePage=document.querySelector('.page:not(.hidden)');const pid=activePage?activePage.id.replace('page-',''):'';if(pid==='tiendas')renderTiendas(db);if(document.getElementById('pTienda').value===id){const dirInput=document.getElementById('pDirRetiro');if(!dirInput.value||dirInput.value===oldDir)dirInput.value=direccion;try{document.getElementById('ssTienda').setValue(id);}catch(e){}renderTiendaInfo(t);if(document.getElementById('pCiudad').value)onCiudadChange();}showToast('✅ Tienda actualizada','success');}
 // ===== BLOQUEO DE EDICIÓN + MONTOS =====
 function pedidoBloqueadoPorRendido(p){if(!p||p.estado!=='Entregado')return false;const db=getDB();const r=db.rendiciones&&db.rendiciones[p.deliveryId]&&db.rendiciones[p.deliveryId][p.fecha];if(!r||!r.resetTs)return false;return (p.entregadoTs||0)<=Number(r.resetTs);}
@@ -2303,7 +2304,7 @@ function renderRendiciones(){const content=document.getElementById('rendicionesC
 function rendEnviarWhatsAppTienda(tiendaId){return planillaTienda(tiendaId);}
 function establecerRangoDosMeses(){const dEl=document.getElementById('rendDesde'),hEl=document.getElementById('rendHasta');if(!dEl||!hEl)return;const now=new Date();const cur=now.toISOString().slice(0,7);const prev=new Date(now.getFullYear(),now.getMonth()-1,1).toISOString().slice(0,7);if(!dEl.value||dEl.value.length!==7)dEl.value=prev;if(!hEl.value||hEl.value.length!==7)hEl.value=cur;}
 // ===== TIENDAS / PERSONAL / GASTOS =====
-function renderTiendas(db){const tbody=document.getElementById('tiendasTable');if(!tbody)return;tbody.innerHTML=(db.tiendas||[]).map(function(t){const saldo=db.pedidos.filter(function(p){return p.tiendaId===t.id&&p.estado==='Entregado';}).reduce(function(s,p){return s+montoRendTienda(p)-(p.costo||0);},0);const mapsCell=t.urlMaps?`<a href="${t.urlMaps}" target="_blank" rel="noopener" class="link-maps">📍 Ver Retiro</a>`:'<span class="maps-badge-no">❌ Sin link</span>';return `<tr><td><strong>${t.nombre}</strong></td><td><a href="${buildWhatsAppUrl(t.telefono)}" target="_blank" rel="noopener" style="color:#25D366;font-weight:600">💬 ${t.telefono}</a></td><td>${t.ciudad}</td><td>${t.direccion}</td><td>${mapsCell}</td><td class="currency" style="color:${saldo>=0?'var(--success)':'var(--danger)'}">${formatGs(saldo)}</td><td><button class="btn btn-sm btn-edit" onclick="openEditarTienda('${t.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteTienda('${t.id}')">🗑️</button></td></tr>`;}).join('');}
+function renderTiendas(db){const tbody=document.getElementById('tiendasTable');if(!tbody)return;tbody.innerHTML=(db.tiendas||[]).map(function(t){const saldo=db.pedidos.filter(function(p){return p.tiendaId===t.id&&p.estado==='Entregado';}).reduce(function(s,p){return s+montoRendTienda(p)-(p.costo||0);},0);const mapsCell=t.urlMaps?`<a href="${t.urlMaps}" target="_blank" rel="noopener" class="link-maps">📍 Ver Retiro</a>`:'<span class="maps-badge-no">❌ Sin link</span>';return `<tr><td><span style="display:inline-flex;align-items:center;gap:8px">${logoImgHtml(t.id)}<strong>${t.nombre}</strong></span></td><td><a href="${buildWhatsAppUrl(t.telefono)}" target="_blank" rel="noopener" style="color:#25D366;font-weight:600">💬 ${t.telefono}</a></td><td>${t.ciudad}</td><td>${t.direccion}</td><td>${mapsCell}</td><td class="currency" style="color:${saldo>=0?'var(--success)':'var(--danger)'}">${formatGs(saldo)}</td><td><button class="btn btn-sm btn-edit" onclick="openEditarTienda('${t.id}')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteTienda('${t.id}')">🗑️</button></td></tr>`;}).join('');}
 function deleteTienda(id){if(!confirm('¿Eliminar esta tienda?'))return;const db=getDB();db.tiendas=db.tiendas.filter(function(t){return t.id!==id;});saveDB(db);opDelete('Tiendas',id);populateSelects(db);renderTiendas(db);}
 function renderPersonal(db){const tbody=document.getElementById('personalTable');if(!tbody)return;tbody.innerHTML=(db.users||[]).map(function(u){return `<tr><td><strong>${u.name}</strong></td><td>${u.email||u.id||'—'}</td><td>${esAdminRole(u.role)?'👑 '+(u.role==='dueño'?'Dueño':'Admin'):u.role==='ruteador'?'🗺️ Ruteador':'🏍️ Delivery'}</td><td>${u.cedula||''}</td><td class="currency">${formatGs(u.sueldoMensual!=null?u.sueldoMensual:(u.jornal||0))}</td><td>${u.fechaIngreso||'-'}</td><td><span class="badge ${u.estado==='Activo'?'badge-delivered':'badge-cancelled'}">${u.estado}</span></td><td>${u.estado==='Pendiente'?`<button class="btn btn-sm btn-success" onclick="aprobarUsuario('${u.id}')">✅ Aprobar</button> `:''}<button class="btn btn-sm btn-edit" onclick="openEditarPersonal('${u.id}')">✏️ Editar</button> <button class="btn btn-sm btn-secondary" onclick="toggleEstadoUser('${u.id}')">${u.estado==='Activo'?'Desactivar':'Activar'}</button></td></tr>`;}).join('');}
 function savePersonal(){const db=getDB();const nombre=document.getElementById('perNombre').value.trim();const email=normEmail(document.getElementById('perEmail').value);if(!nombre){showToast('Ingrese nombre','error');return;}if(!email){showToast('Ingrese email','error');return;}if(db.users.find(function(u){return u.id===email;})){showToast('Ya existe usuario con ese email','error');return;}const fechaIngreso=document.getElementById('perIngreso').value;if(!fechaIngreso){showToast('Ingrese fecha de ingreso','error');return;}const sueldo=getMoneyValue('perJornal');if(sueldo<=0){showToast('Ingrese sueldo','error');return;}const rolSel=document.getElementById('perRol').value;const u={id:email,name:nombre,email:email,role:rolSel==='Administración'?'admin':rolSel.toLowerCase(),cedula:document.getElementById('perCedula').value,sueldoMensual:sueldo,jornal:sueldo,fechaIngreso:fechaIngreso,telefono:document.getElementById('perTelefono').value,estado:'Activo'};db.users.push(u);saveDB(db);opUpsert('Usuarios',u.id,u);closeModal('modalPersonal');showToast('Personal agregado. Cargá contraseña en hoja Usuarios.','success');populateSelects(db);renderPersonal(db);}
@@ -3723,6 +3724,60 @@ function onTiendaLogoChange(input){
         var cv=document.createElement('canvas');cv.width=nw;cv.height=nh;
         var cx=cv.getContext('2d');cx.drawImage(img,0,0,nw,nh);
         guardarTiendaLogo(cv.toDataURL('image/png'));
+      }catch(err){showToast('\u26A0\uFE0F No se pudo procesar la imagen','error');}
+    };
+    img.onerror=function(){showToast('\u26A0\uFE0F No se pudo leer la imagen. Prob\u00E1 con otra.','error');input.value='';};
+    img.src=ev.target.result;
+  };
+  reader.onerror=function(){showToast('\u26A0\uFE0F No se pudo leer el archivo','error');};
+  reader.readAsDataURL(file);
+}
+function tiendaLogoKeyFor(tiendaId){return 'jagi_zoe_tienda_logo_'+(tiendaId||'x');}
+function getTiendaLogoById(tiendaId){try{return localStorage.getItem(tiendaLogoKeyFor(tiendaId))||'';}catch(e){return '';}}
+function logoImgHtml(tiendaId){
+  var logo=getTiendaLogoById(tiendaId);
+  if(!logo)return '';
+  return '<img src="'+logo+'" alt="logo" style="height:32px;width:32px;object-fit:contain;border-radius:6px;background:#fff;border:1px solid var(--gray-200)">';
+}
+function renderLogoModalPrev(tiendaId){
+  var pv=document.getElementById('etLogoPrev'),pim=document.getElementById('etLogoPrevImg');
+  if(!pv||!pim)return;
+  var logo=getTiendaLogoById(tiendaId);
+  if(logo){pim.src=logo;pv.style.display='flex';}else{pim.removeAttribute('src');pv.style.display='none';}
+}
+function guardarTiendaLogoById(tiendaId,dataUrl){
+  if(!dataUrl||!tiendaId)return;
+  try{localStorage.setItem(tiendaLogoKeyFor(tiendaId),dataUrl);}catch(e){showToast('\u26A0\uFE0F No se pudo guardar el logo','error');return;}
+  renderTiendaLogo();renderLogoModalPrev(tiendaId);
+  try{renderTiendas(getDB());}catch(e){}
+  showToast('\u2705 Logo de la tienda guardado. Se muestra al lado de su nombre.','success');
+}
+function quitarTiendaLogoById(tiendaId){
+  if(!tiendaId)return;
+  try{localStorage.removeItem(tiendaLogoKeyFor(tiendaId));}catch(e){}
+  var eti=document.getElementById('etLogoInput');if(eti)eti.value='';
+  renderTiendaLogo();renderLogoModalPrev(tiendaId);
+  try{renderTiendas(getDB());}catch(e){}
+  showToast('Logo de la tienda eliminado.','success');
+}
+function onEditarTiendaLogoChange(input){
+  if(!input||!input.files||!input.files[0])return;
+  var tiendaId=(document.getElementById('etId')||{}).value||'';
+  if(!tiendaId){input.value='';return;}
+  var file=input.files[0];
+  if(file.type.indexOf('image/')!==0){showToast('\u26A0\uFE0F Eleg\u00ED un archivo de imagen (JPG o PNG)','error');input.value='';return;}
+  var max=160;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    var img=new Image();
+    img.onload=function(){
+      try{
+        var w=img.width||1,h=img.height||1;
+        var scale=Math.min(1,max/Math.max(w,h));
+        var nw=Math.max(1,Math.round(w*scale)),nh=Math.max(1,Math.round(h*scale));
+        var cv=document.createElement('canvas');cv.width=nw;cv.height=nh;
+        var cx=cv.getContext('2d');cx.drawImage(img,0,0,nw,nh);
+        guardarTiendaLogoById(tiendaId,cv.toDataURL('image/png'));
       }catch(err){showToast('\u26A0\uFE0F No se pudo procesar la imagen','error');}
     };
     img.onerror=function(){showToast('\u26A0\uFE0F No se pudo leer la imagen. Prob\u00E1 con otra.','error');input.value='';};
