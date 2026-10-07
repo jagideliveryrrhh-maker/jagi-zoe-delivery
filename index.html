@@ -800,6 +800,8 @@ body.sidebar-collapsed .main-content{margin-left:0}
 <div style="display:flex;gap:8px;padding:10px 12px 4px;flex-wrap:wrap">
 <button class="btn btn-maps" style="flex:1;min-width:150px" onclick="abrirModalFlyerCliente()">&#128196; Generar Flyer</button>
 <button class="btn btn-secondary" style="flex:1;min-width:150px" onclick="abrirRendicionTienda()">&#128176; Mi Rendici&#243;n</button>
+<button class="btn btn-secondary" style="flex:1;min-width:150px" onclick="abrirDatosCliente()">&#9881; Configuraci&#243;n</button>
+<button class="btn btn-secondary" style="flex:1;min-width:150px" onclick="abrirSoporteWhatsApp()">&#128172; Soporte</button>
 </div>
 <div style="display:flex;gap:8px;padding:8px 12px 4px">
 <button class="btn btn-primary" style="flex:1" id="clientTabPedidos" onclick="clientTab('pedidos')">&#128230; Mis Pedidos</button>
@@ -809,20 +811,25 @@ body.sidebar-collapsed .main-content{margin-left:0}
 <div class="card"><div class="card-header"><h3>🎨 Generar Flyer por Ciudad</h3></div><div class="card-body"><div class="alert-info" style="margin-bottom:12px">Elegí tu ciudad y generá el flyer de tarifas para compartir por WhatsApp o guardar.</div><div class="form-group" style="margin-bottom:12px"><label>🏙️ Ciudad (origen)</label><select id="clientCiudadOrigen" onchange="onClienteCiudadOrigenChange()"></select></div><button class="btn btn-maps" onclick="abrirModalFlyerCliente()">🎨 Generar Flyer</button></div></div>
 <div class="card" id="clientDatosCard"><div class="card-header"><h3>&#128205; Mis Datos</h3></div><div class="card-body"><div id="clientDatosBody"></div><button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="abrirDatosCliente()">&#9998; Editar mis datos / ubicaci&#243;n</button></div></div>
 <div class="card"><div class="card-header"><h3>&#128230; Cargar Nuevo Pedido</h3></div><div class="card-body">
+<div style="display:flex;gap:8px;margin-bottom:12px">
+<button type="button" id="cTipoPedido" class="btn btn-primary" style="flex:1" onclick="setTipoPedidoCliente('pedido')">&#128230; Pedido</button>
+<button type="button" id="cTipoDevolucion" class="btn btn-secondary" style="flex:1" onclick="setTipoPedidoCliente('devolucion')">&#8617; Devoluci&#243;n</button>
+</div>
+<div class="alert-info" id="cDevInfo" style="display:none;margin-bottom:12px">&#8617; <b>Devoluci&#243;n:</b> solo complet&#225;s la <b>tienda</b> a la que devolv&#233;s. El costo de env&#237;o es <b>Gs. 0</b>.</div>
 <form id="formClientePedido" onsubmit="return savePedidoCliente(event)">
 <div class="form-grid">
-<div class="form-group full-width" id="cTiendaGroup"><label>Tienda *</label><select id="cTienda" onchange="onClienteTiendaSeleccionada()"><option value="">Seleccionar...</option></select></div>
+<div class="form-group full-width" id="cTiendaGroup"><label id="cTiendaLabel">Tienda *</label><select id="cTienda" onchange="onClienteTiendaSeleccionada()"><option value="">Seleccionar...</option></select></div>
 <div class="form-group full-width"><div class="info-box" id="cOrigenInfo"></div></div>
 <div class="form-group" style="display:none"><label>Tu nombre *</label><input type="text" id="cCliente"></div>
-<div class="form-group"><label>Tel&#233;fono *</label><input type="text" id="cTelefono"></div>
-<div class="form-group"><label>Ciudad destino *</label><select id="cCiudad"></select></div>
-<div class="form-group"><label>Monto a cobrar *</label><div class="money-input-wrapper"><input type="text" id="cMonto" class="money-input" inputmode="numeric" placeholder="0"></div><div class="info-box" id="cMontoInfo"></div></div>
-<div class="form-group full-width"><label>Link Google Maps de entrega &#128205; *</label><input type="text" id="cDirEntrega" placeholder="https://maps.app.goo.gl/..." oninput="validarMapsInput('cDirEntrega','errCDirEntrega','cEntregaInfo')"><div class="error-message" id="errCDirEntrega">&#128205; Link de Google Maps (obligatorio)</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button type="button" class="btn btn-maps btn-xs" onclick="sugerirLinkMapsCliente()">&#128269; Buscar la direcci&#243;n en Google Maps</button><button type="button" class="btn btn-secondary btn-xs" onclick="usarLinkMapsClienteRegistrado()">&#128204; Usar mi ubicaci&#243;n registrada</button></div><div class="info-box" id="cEntregaInfo"></div></div>
-<div class="form-group"><label>M&#233;todo de pago</label><select id="cMetodo" onchange="onClienteMetodoChange()"><option>Efectivo</option><option>Transferencia</option><option>Solo Entrega</option></select></div>
-<div class="form-group"><label>&#128337; Rango Horario *</label><div id="cVentanaRango" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div><input type="hidden" id="cVentana"><div class="error-message" id="errCVentana">Eleg&#237; el rango horario de entrega</div><div class="info-box" id="cVentanaInfo"></div></div>
-<div class="form-group full-width"><label>Observaciones</label><textarea id="cObs" rows="2"></textarea></div>
+<div class="form-group" id="cTelGroup"><label>Tel&#233;fono *</label><input type="text" id="cTelefono"></div>
+<div class="form-group" id="cCiudadGroup"><label>Ciudad destino *</label><select id="cCiudad"></select></div>
+<div class="form-group" id="cMontoGroup"><label>Monto a cobrar *</label><div class="money-input-wrapper"><input type="text" id="cMonto" class="money-input" inputmode="numeric" placeholder="0"></div><div class="info-box" id="cMontoInfo"></div></div>
+<div class="form-group full-width" id="cMapsGroup"><label>Link Google Maps de entrega &#128205; *</label><input type="text" id="cDirEntrega" placeholder="https://maps.app.goo.gl/..." oninput="validarMapsInput('cDirEntrega','errCDirEntrega','cEntregaInfo')"><div class="error-message" id="errCDirEntrega">&#128205; Link de Google Maps (obligatorio)</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button type="button" class="btn btn-maps btn-xs" onclick="sugerirLinkMapsCliente()">&#128269; Buscar la direcci&#243;n en Google Maps</button><button type="button" class="btn btn-secondary btn-xs" onclick="usarLinkMapsClienteRegistrado()">&#128204; Usar mi ubicaci&#243;n registrada</button></div><div class="info-box" id="cEntregaInfo"></div></div>
+<div class="form-group" id="cMetodoGroup"><label>M&#233;todo de pago</label><select id="cMetodo" onchange="onClienteMetodoChange()"><option>Efectivo</option><option>Transferencia</option><option>Solo Entrega</option></select></div>
+<div class="form-group" id="cVentanaGroup"><label>&#128337; Rango Horario *</label><div id="cVentanaRango" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div><input type="hidden" id="cVentana"><div class="error-message" id="errCVentana">Eleg&#237; el rango horario de entrega</div><div class="info-box" id="cVentanaInfo"></div></div>
+<div class="form-group full-width" id="cObsGroup"><label>Observaciones</label><textarea id="cObs" rows="2"></textarea></div>
 </div>
-<button type="submit" class="btn btn-primary" style="width:100%;margin-top:16px">&#128228; Enviar Pedido</button>
+<button type="submit" id="cEnviarBtn" class="btn btn-primary" style="width:100%;margin-top:16px">&#128228; Enviar Pedido</button>
 </form></div></div>
 <div class="card"><div class="card-header"><h3>&#128230; Mis Pedidos</h3></div><div class="card-body" id="clientPedidosList"></div></div>
 </div>
@@ -2749,7 +2756,7 @@ function renderPedidosNuevos(){
     var btnMap=ue
       ?'<a href="'+ue+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs" style="margin-top:6px">📍 Ver dónde se entrega (Google Maps)</a>'
       :(p.dirEntrega?'<a href="'+safeText(p.dirEntrega)+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs" style="margin-top:6px">📍 Ver dónde se entrega</a>':'<button class="btn btn-xs btn-disabled" disabled style="margin-top:6px">📍 Sin link de entrega</button>');
-    return '<div class="delivery-card" style="margin-bottom:12px"><div class="dc-id">'+p.id+' '+badgeEstado(p.estado)+'</div>'
+    return '<div class="delivery-card" style="margin-bottom:12px"><div class="dc-id">'+p.id+' '+badgeEstado(p.estado)+(p.devolucion?' <span class="badge" style="background:#8e44ad;color:#fff">\u{21A9} Devoluci\u00F3n</span>':'')+'</div>'
       +'<div>🏪 '+safeText(p.tienda||t.nombre)+' · 🏙️ '+safeText(p.ciudad)+'</div>'
       +'<div>👤 '+safeText(p.cliente)+' · 📞 '+safeText(p.telefono||'')+'</div>'
       +'<div>💰 Monto a cobrar: '+formatGs(p.monto)+' · 🚚 Envío: '+formatGs(p.costo)+' · '+safeText(p.metodo)+'</div>'
@@ -3312,7 +3319,7 @@ function renderClientApp(){
       if(ur)urls+='<a href="'+ur+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs">🗺️ Google Maps Retiro</a> ';
       if(ue)urls+='<a href="'+ue+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs">📍 Google Maps Entrega</a> ';
       return '<div class="delivery-card" style="margin-bottom:10px">'
-        +'<div class="dc-id">'+p.id+' '+badgeEstado(p.estado)+'</div>'
+        +'<div class="dc-id">'+p.id+' '+badgeEstado(p.estado)+(p.devolucion?' <span class="badge" style="background:#8e44ad;color:#fff">\u{21A9} Devoluci\u00F3n</span>':'')+'</div>'
         +'<div>🏪 '+safeText(p.tienda)+' → 📍 '+safeText(p.ciudad)+'</div>'
         +'<div>💰 '+formatGs(p.monto)+' · '+safeText(p.metodo)+'</div>'
         +'<div>🕐 Horario: '+(p.ventana?safeText(p.ventana):'Todo el día')+'</div>'
@@ -3346,31 +3353,46 @@ function renderClientApp(){
   var obs=document.getElementById('cObs').value.trim();
   var ventana=normalizarVentana(document.getElementById('cVentana').value);
   if(!tiendaId){
-    showToast(conUbic?'No encontré tu ubicación registrada':'Elegí la tienda',"error");
+    showToast(conUbic?'No encontr\u00E9 tu ubicaci\u00F3n registrada':'Eleg\u00ED la tienda',"error");
     if(!conUbic)abrirDatosCliente();
     return false;
   }
-  if(!ciudad){showToast('Elegí la ciudad de destino','error');return false;}
-  if(!ventana){
-    var _ve=document.getElementById('errCVentana');
-    if(_ve)_ve.classList.add('visible');
-    showToast('🕐 Elegí el rango horario de entrega','error');
-    return false;
-  }
-  if(!dirEntrega){showToast('Pegá el link de Google Maps de la entrega','error');return false;}
-  if(!isGoogleMapsUrl(dirEntrega)){showToast('La entrega debe ser un LINK de GOOGLE MAPS (no Waze ni dirección escrita)','error');return false;}
-  /* Solo Entrega = servicio de envío nada más: el monto queda en 0. */
-  if(metodo==='Solo Entrega')monto=0;
-  else if(monto<=0){showToast('Ingresá el monto a cobrar','error');return false;}
+  var esDev=_tipoPedidoCliente==='devolucion';
   var tienda=db.tiendas.find(function(t){return t.id===tiendaId;});
-  if(!tienda){showToast('No se encontró la tienda de origen','error');return false;}
+  if(!tienda){showToast('No se encontr\u00F3 la tienda de origen','error');return false;}
+  var costo=0;
+  var ciudadOrigenFinal=tienda.ciudad;
+  var pickUrl='';
+  if(esDev){
+    var _ubi=ubicacionPropiaCliente();
+    if(_ubi&&_ubi.urlMaps&&isGoogleMapsUrl(_ubi.urlMaps))pickUrl=normalizeMapsUrl(_ubi.urlMaps);
+    if(_ubi&&_ubi.ciudad)ciudadOrigenFinal=String(_ubi.ciudad);
+    ciudad=tienda.ciudad||'';
+    dirEntrega=normalizeMapsUrl(tienda.urlMaps||'');
+    monto=0;costo=0;metodo='Solo Entrega';ventana='Todo el d\u00EDa';
+  }else{
+    if(!ciudad){showToast('Eleg\u00ED la ciudad de destino','error');return false;}
+    if(!ventana){
+      var _ve=document.getElementById('errCVentana');
+      if(_ve)_ve.classList.add('visible');
+      showToast('\u{1F550} Eleg\u00ED el rango horario de entrega','error');
+      return false;
+    }
+    if(!dirEntrega){showToast('Peg\u00E1 el link de Google Maps de la entrega','error');return false;}
+    if(!isGoogleMapsUrl(dirEntrega)){showToast('La entrega debe ser un LINK de GOOGLE MAPS (no Waze ni direcci\u00F3n escrita)','error');return false;}
+    if(metodo==='Solo Entrega')monto=0;
+    else if(monto<=0){showToast('Ingres\u00E1 el monto a cobrar','error');return false;}
+    costo=getTarifa(db,tienda.ciudad,ciudad);
+  }
+  var dirRetiroFinal=(isGoogleMapsUrl(tienda.urlMaps)?String(tienda.urlMaps).trim():(tienda.direccion||''));
+  if(esDev&&pickUrl)dirRetiroFinal=pickUrl;
   var num=String(db.nextPedidoNum).padStart(3,'0');
-  var p={id:'P-'+num,fecha:hoyLocal(),tiendaId:tiendaId,tienda:tienda.nombre,telefonoTienda:tienda.telefono,urlMapsTienda:tienda.urlMaps||'',cliente:cliente,telefono:telefono,clienteEmail:currentUser.id,dirRetiro:(isGoogleMapsUrl(tienda.urlMaps)?String(tienda.urlMaps).trim():(tienda.direccion||'')),ciudadOrigen:tienda.ciudad,ciudad:ciudad,dirEntrega:normalizeMapsUrl(dirEntrega),monto:monto,costo:getTarifa(db,tienda.ciudad,ciudad),metodo:metodo,hora:new Date().toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'}),ventana:ventana,deliveryId:'',delivery:'',ruteadorId:'',estado:'Pendiente',verificado:false,horaEntrega:'',obs:obs,motivo:'',montoCobrado:0,ordenEntrega:0,retirado:false,horaRetiro:'',horaInicioRuta:'',entregadoTs:0,estadoPago:'',comprobante:'',comprobanteNombre:'',comprobanteTs:0,cuentaDestino:'',pagoA:'',pagoATs:0,rendDeliveryCero:false,rendTiendaCero:false,comprobanteVerificado:false,notificadoTienda:false,fechaReagendado:'',capturaReagendado:'',reagendadoPor:'',metodoSolicitado:'',cambioMetodoTs:0,cambioMetodoNota:''};
+  var p={id:'P-'+num,fecha:hoyLocal(),tiendaId:tiendaId,tienda:tienda.nombre,telefonoTienda:tienda.telefono,urlMapsTienda:tienda.urlMaps||'',cliente:cliente,telefono:telefono,clienteEmail:currentUser.id,dirRetiro:dirRetiroFinal,ciudadOrigen:ciudadOrigenFinal,ciudad:ciudad,dirEntrega:normalizeMapsUrl(dirEntrega),monto:monto,costo:costo,metodo:metodo,devolucion:esDev,hora:new Date().toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'}),ventana:ventana,deliveryId:'',delivery:'',ruteadorId:'',estado:'Pendiente',verificado:false,horaEntrega:'',obs:obs,motivo:'',montoCobrado:0,ordenEntrega:0,retirado:false,horaRetiro:'',horaInicioRuta:'',entregadoTs:0,estadoPago:'',comprobante:'',comprobanteNombre:'',comprobanteTs:0,cuentaDestino:'',pagoA:'',pagoATs:0,rendDeliveryCero:false,rendTiendaCero:false,comprobanteVerificado:false,notificadoTienda:false,fechaReagendado:'',capturaReagendado:'',reagendadoPor:'',metodoSolicitado:'',cambioMetodoTs:0,cambioMetodoNota:''};
   db.pedidos.push(p);db.nextPedidoNum++;saveDB(db);opUpsert('Pedidos',p.id,p);
   addNotification('nuevo_pedido_cliente',p);
   registrarLog('pedido_cliente_creado',p.id,{clienteEmail:currentUser.id});
   publicarBeacon();
-  showToast('📦 Pedido '+p.id+' enviado. Esperá la confirmación.','success');
+  showToast(esDev?'\u{21A9} Devoluci\u00F3n '+p.id+' enviada. Esper\u00E1 la confirmaci\u00F3n.':'\u{1F4E6} Pedido '+p.id+' enviado. Esper\u00E1 la confirmaci\u00F3n.','success');
   document.getElementById('formClientePedido').reset();
   var _cm=document.getElementById('cMonto');
   if(_cm){_cm.dataset.montoPrevio='';_cm.readOnly=false;}
@@ -3384,7 +3406,7 @@ function renderClientApp(){
   if(ex)ex.remove();
   var tienda=db.tiendas.find(function(t){return t.id===p.tiendaId;})||{};
   var ur=getMapsUrlRetiro(p), ue=getMapsUrlEntrega(p);
-  var html='<div class="modal-overlay active" id="modalDetallePedidoCliente"><div class="modal" style="max-width:600px"><div class="modal-header"><h3>🔍 Detalle del Pedido '+p.id+'</h3><button class="modal-close" onclick="closeModal(\'modalDetallePedidoCliente\')">×</button></div><div class="modal-body">';
+  var html='<div class="modal-overlay active" id="modalDetallePedidoCliente"><div class="modal" style="max-width:600px"><div class="modal-header"><h3>🔍 Detalle del Pedido '+p.id+(p.devolucion?' \u{21A9} <span class="badge" style="background:#8e44ad;color:#fff">Devoluci\u00F3n</span>':'')+'</h3><button class="modal-close" onclick="closeModal(\'modalDetallePedidoCliente\')">×</button></div><div class="modal-body">';
   html+='<div class="det-item"><span>🏪 Tienda (origen)</span><span class="det-val">'+safeText(p.tienda||tienda.nombre)+'</span></div>';
   html+='<div class="det-item"><span>📍 Dirección de RETIRO</span><span class="det-val">'+(ur?'<a href="'+ur+'" target="_blank" rel="noopener">'+safeText(p.dirRetiro||tienda.direccion||'Ver en mapa')+'</a>':safeText(p.dirRetiro||tienda.direccion||'—'))+'</span></div>';
   html+='<div class="det-item"><span>🏙️ Ciudad de origen</span><span class="det-val">'+safeText(p.ciudadOrigen||tienda.ciudad||'—')+'</span></div>';
@@ -3508,7 +3530,7 @@ function abrirModalFlyerCliente(){
   setTimeout(function(){ensureFlyerLogo(function(){previewFlyer();});},60);
 }
 function renderTiendaApp(){if(!currentUser||!esRolTienda(currentUser.role))return;var db=getDB();document.getElementById('tiendaWelcome').textContent='Hola, '+currentUser.name+' · '+hoyLocal();var mis=pedidosDeTiendaActual().sort(function(a,b){return b.id.localeCompare(a.id);});document.getElementById('tStatTotal').textContent=mis.length;document.getElementById('tStatEntr').textContent=mis.filter(function(p){return p.estado==='Entregado';}).length;document.getElementById('tStatPend').textContent=mis.filter(function(p){return !['Entregado','Cancelado'].includes(p.estado);}).length;
-renderTiendaTarifas();document.getElementById('tiendaPedidosList').innerHTML=mis.length?mis.map(function(p){var _urlR=getMapsUrlRetiro(p),_urlE=getMapsUrlEntrega(p);var _links='';if(_urlR)_links+='<a href="'+_urlR+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs">🗺️ Google Maps Retiro</a> ';if(_urlE)_links+='<a href="'+_urlE+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs">🗺️ Google Maps Entrega</a>';return '<div class="delivery-card" style="margin-bottom:10px"><div class="dc-id">'+p.id+' '+badgeEstado(p.estado)+'</div><div>👤 '+safeText(p.cliente)+' · 📍 '+safeText(p.ciudad)+'</div><div>💰 '+formatGs(p.monto)+' · '+safeText(p.metodo)+(esPagoDelCliente(p.metodo)?' \u{1F381} El cliente pag\u00F3 a <strong>'+(p.pagoA==='tienda'?'la TIENDA':'NOSOTROS')+'</strong> \u{1F44D} te corresponde <strong>'+formatGs(montoRendTienda(p))+'</strong>':'')+'</div><div>⏰ Rango horario: <strong>'+(p.ventana?safeText(p.ventana):'Todo el día')+'</strong></div>'+(_links?'<div style="margin-top:6px">'+_links+'</div>':'')+(p.motivo?'<div style="color:var(--danger);font-weight:600">📝 '+safeText(p.motivo)+'</div>':'')+(p.dijoCliente?'<div style="color:var(--danger);font-style:italic;padding-left:10px;border-left:3px solid #e74c3c">🗣️ “'+safeText(p.dijoCliente)+'”</div>':'')+'</div>';}).join(''):'<div class="empty-state"><p>Sin pedidos aún.</p></div>';
+renderTiendaTarifas();document.getElementById('tiendaPedidosList').innerHTML=mis.length?mis.map(function(p){var _urlR=getMapsUrlRetiro(p),_urlE=getMapsUrlEntrega(p);var _links='';if(_urlR)_links+='<a href="'+_urlR+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs">🗺️ Google Maps Retiro</a> ';if(_urlE)_links+='<a href="'+_urlE+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs">🗺️ Google Maps Entrega</a>';return '<div class="delivery-card" style="margin-bottom:10px"><div class="dc-id">'+p.id+' '+badgeEstado(p.estado)+(p.devolucion?' <span class="badge" style="background:#8e44ad;color:#fff">\u{21A9} Devoluci\u00F3n</span>':'')+'</div><div>👤 '+safeText(p.cliente)+' · 📍 '+safeText(p.ciudad)+'</div><div>💰 '+formatGs(p.monto)+' · '+safeText(p.metodo)+(esPagoDelCliente(p.metodo)?' \u{1F381} El cliente pag\u00F3 a <strong>'+(p.pagoA==='tienda'?'la TIENDA':'NOSOTROS')+'</strong> \u{1F44D} te corresponde <strong>'+formatGs(montoRendTienda(p))+'</strong>':'')+'</div><div>⏰ Rango horario: <strong>'+(p.ventana?safeText(p.ventana):'Todo el día')+'</strong></div>'+(_links?'<div style="margin-top:6px">'+_links+'</div>':'')+(p.motivo?'<div style="color:var(--danger);font-weight:600">📝 '+safeText(p.motivo)+'</div>':'')+(p.dijoCliente?'<div style="color:var(--danger);font-style:italic;padding-left:10px;border-left:3px solid #e74c3c">🗣️ “'+safeText(p.dijoCliente)+'”</div>':'')+'</div>';}).join(''):'<div class="empty-state"><p>Sin pedidos aún.</p></div>';
 var notifs=(db.notifications||[]).filter(function(n){var p=db.pedidos.find(function(x){return x.id===n.pedidoId;});return p&&mis.some(function(m){return m.id===p.id;});}).slice(0,30);
 document.getElementById('tiendaNotifs').innerHTML=notifs.length?notifs.map(function(n){return '<div class="notif-item'+(n.read?'':' unread')+'"><div class="notif-icon">🔔</div><div class="notif-text">'+n.message+'<div class="notif-time">'+fmtAgo(n.ts)+'</div></div></div>';}).join(''):'<div style="padding:16px;color:var(--gray-500)">Sin notificaciones</div>';}
 function abrirRendicionTienda(){var db=getDB();var mis=pedidosDeTiendaActual();var entregados=mis.filter(function(p){return p.estado==='Entregado';});var totalCobrado=entregados.reduce(function(s,p){return s+montoRendTienda(p);},0);var servicio=entregados.reduce(function(s,p){return s+(p.costo||0);},0);var pend=entregados.filter(function(p){return (p.estadoPago||'Pendiente a Pagar')!=='Pagado';}).reduce(function(s,p){return s+montoRendTienda(p);},0);var html='<div class="rendicion-summary"><div class="rendicion-box"><div class="rb-label">Total Cobrado</div><div class="rb-value">'+formatGs(totalCobrado)+'</div></div><div class="rendicion-box"><div class="rb-label">(-) Servicio</div><div class="rb-value rb-negative">'+formatGs(servicio)+'</div></div><div class="rendicion-box"><div class="rb-label">= Saldo Tienda</div><div class="rb-value rb-positive">'+formatGs(totalCobrado-servicio)+'</div></div><div class="rendicion-box"><div class="rb-label">Pendiente a Pagar</div><div class="rb-value" style="color:#d68910">'+formatGs(pend)+'</div></div></div>';html+='<div class="table-responsive"><table><thead><tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>Monto</th><th>Servicio</th><th>Estado Pago</th></tr></thead><tbody>';html+=entregados.map(function(p){var pago=p.estadoPago||'Pendiente a Pagar';return '<tr><td>'+p.id+'</td><td>'+p.fecha+'</td><td>'+safeText(p.cliente)+'</td><td class="currency">'+formatGs(montoRendTienda(p))+'</td><td class="currency">'+formatGs(p.costo||0)+'</td><td>'+(pago==='Pagado'?'<span class="badge badge-pago-ok">🟢 Pagado</span>':'<span class="badge badge-pago-pend">🟡 Pendiente</span>')+'</td></tr>';}).join('')||'<tr><td colspan="6" style="text-align:center;padding:16px">Sin entregados</td></tr>';html+='</tbody></table></div>';document.getElementById('tiendaRendicionBody').innerHTML=html;openModal('modalRendicionTienda');}
@@ -3700,6 +3722,34 @@ function onClienteMetodoChange(){
 }
 
 /* --- 5. Pestañas de la app del cliente ---------------------------------- */
+function abrirSoporteWhatsApp(){
+  var db=getDB();
+  var adminUser=(db.users||[]).find(function(u){return (u.estado==='Activo'&&esAdminRole(u.role))&&u.telefono;});
+  if(!adminUser){showToast('\u{26A0}\u{FE0F} No se encontr\u00F3 el WhatsApp del Administrador','error');return;}
+  var msg='Hola! \u{1F44B} Soy '+currentUser.name+' y necesito ayuda con JAGI Y ZOE DELIVERY.';
+  window.open('https://wa.me/'+phoneToWa(adminUser.telefono)+'?text='+encodeURIComponent(msg),'_blank');
+}
+var _tipoPedidoCliente='pedido';
+function setTipoPedidoCliente(t){
+  _tipoPedidoCliente=(t==='devolucion')?'devolucion':'pedido';
+  var dev=_tipoPedidoCliente==='devolucion';
+  var ids=['cTelGroup','cCiudadGroup','cMontoGroup','cMapsGroup','cMetodoGroup','cVentanaGroup'];
+  for(var k=0;k<ids.length;k++){
+    var el=document.getElementById(ids[k]);
+    if(el)el.classList.toggle('hidden',dev);
+  }
+  var obs=document.getElementById('cObsGroup');
+  if(obs)obs.classList.remove('hidden');
+  var info=document.getElementById('cDevInfo');
+  if(info)info.style.display=dev?'':'none';
+  var b1=document.getElementById('cTipoPedido'),b2=document.getElementById('cTipoDevolucion');
+  if(b1)b1.className='btn '+(dev?'btn-secondary':'btn-primary');
+  if(b2)b2.className='btn '+(dev?'btn-primary':'btn-secondary');
+  var tl=document.getElementById('cTiendaLabel');
+  if(tl)tl.textContent=dev?'Tienda (a la que devolv\u00E9s) *':'Tienda *';
+  var sub=document.getElementById('cEnviarBtn');
+  if(sub)sub.textContent=dev?'\u{21A9} Enviar Devoluci\u00F3n':'\u{1F4E4} Enviar Pedido';
+}
 var _clientTab='pedidos';
 function clientTab(which){
   _clientTab=(which==='rendicion')?'rendicion':'pedidos';
