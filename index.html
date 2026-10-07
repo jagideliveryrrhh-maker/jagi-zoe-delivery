@@ -813,8 +813,8 @@ body.sidebar-collapsed .main-content{margin-left:0}
 <div class="form-grid">
 <div class="form-group full-width" id="cTiendaGroup"><label id="cTiendaLabel">Tienda *</label><select id="cTienda" onchange="onClienteTiendaSeleccionada()"><option value="">Seleccionar...</option></select></div>
 <div class="form-group full-width"><div class="info-box" id="cOrigenInfo"></div></div>
-<div class="form-group" style="display:none"><label>Tu nombre *</label><input type="text" id="cCliente"></div>
-<div class="form-group" id="cTelGroup"><label>Tel&#233;fono *</label><input type="text" id="cTelefono"></div>
+<div class="form-group full-width" id="cClienteGroup"><label>&#128100; Cliente final (a quien se le entrega) *</label><input type="text" id="cCliente" placeholder="Nombre de la persona que recibe"></div>
+<div class="form-group" id="cTelGroup"><label>Tel&#233;fono del cliente final *</label><input type="text" id="cTelefono" placeholder="Ej: 0983 000 000"></div>
 <div class="form-group" id="cCiudadGroup"><label>Ciudad destino *</label><select id="cCiudad"></select></div>
 <div class="form-group" id="cMontoGroup"><label>Monto a cobrar *</label><div class="money-input-wrapper"><input type="text" id="cMonto" class="money-input" inputmode="numeric" placeholder="0"></div><div class="info-box" id="cMontoInfo"></div></div>
 <div class="form-group full-width" id="cMapsGroup"><label>Link Google Maps de entrega &#128205; *</label><input type="text" id="cDirEntrega" placeholder="https://maps.app.goo.gl/..." oninput="validarMapsInput('cDirEntrega','errCDirEntrega','cEntregaInfo')"><div class="error-message" id="errCDirEntrega">&#128205; Link de Google Maps (obligatorio)</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button type="button" class="btn btn-maps btn-xs" onclick="sugerirLinkMapsCliente()">&#128269; Buscar la direcci&#243;n en Google Maps</button><button type="button" class="btn btn-secondary btn-xs" onclick="usarLinkMapsClienteRegistrado()">&#128204; Usar mi ubicaci&#243;n registrada</button></div><div class="info-box" id="cEntregaInfo"></div></div>
@@ -3399,9 +3399,7 @@ function renderClientApp(){
       oi.innerHTML='<div style="font-weight:700">🏪 Origen de tus pedidos: '+safeText(propia.nombre||currentUser.name)+'</div>'
         +'<div>🏙️ Ciudad: '+safeText(ubi.ciudad)+'</div>'
         +(ubi.direccion?'<div>📍 '+safeText(ubi.direccion)+'</div>':'')
-        +(isGoogleMapsUrl(ubi.urlMaps)?'<div><a href="'+wa+'" target="_blank" rel="noopener">🔗 Ver en Google Maps</a></div>':'')
-        +'<div style="margin-top:6px;font-weight:700">👤 Cliente final: '+safeText(currentUser.name)+'</div>'
-        +'<div>📞 '+safeText(currentUser.telefono||'')+'</div>';
+        +(isGoogleMapsUrl(ubi.urlMaps)?'<div><a href="'+wa+'" target="_blank" rel="noopener">🔗 Ver en Google Maps</a></div>':'');
     }else{
       if(gT)gT.classList.remove('hidden');
       var cur=selT.value;
@@ -3420,10 +3418,6 @@ function renderClientApp(){
   }
   setupAllMoneyInputs();
   poblarVentanaRango('c','');
-  var eN=document.getElementById('cCliente');
-  var eT=document.getElementById('cTelefono');
-  if(eN&&!eN.value.trim())eN.value=currentUser.name||'';
-  if(eT&&!eT.value.trim())eT.value=currentUser.telefono||'';
   var eV=document.getElementById('errCVentana');
   if(eV)eV.classList.remove('visible');
   onClienteMetodoChange();
@@ -3465,8 +3459,8 @@ function renderClientApp(){
      tienda en cada pedido. Sin ella se cae al selector, como antes. */
   var tiendaId=(conUbic&&propia)?propia.id:(document.getElementById('cTienda')||{}).value;
   if(tiendaId)guardarTiendaDeCliente(tiendaId);
-  var cliente=((document.getElementById('cCliente')||{}).value||'').trim()||currentUser.name;
-  var telefono=(document.getElementById('cTelefono').value||'').trim()||currentUser.telefono;
+  var cliente=((document.getElementById('cCliente')||{}).value||'').trim();
+  var telefono=(document.getElementById('cTelefono').value||'').trim();
   var ciudad=document.getElementById('cCiudad').value;
   var dirEntrega=document.getElementById('cDirEntrega').value.trim();
   var monto=getMoneyValue('cMonto');
@@ -3503,10 +3497,13 @@ function renderClientApp(){
     if(!isGoogleMapsUrl(dirEntrega)){showToast('La entrega debe ser un LINK de GOOGLE MAPS (no Waze ni direcci\u00F3n escrita)','error');return false;}
     if(metodo==='Solo Entrega')monto=0;
     else if(monto<=0){showToast('Ingres\u00E1 el monto a cobrar','error');return false;}
+    if(!cliente){showToast('\u{1F464} Pone el nombre del cliente final (a quien se le entrega)','error');return false;}
+    if(!telefono){showToast('\u{1F4DE} Pone el tel\u00E9fono del cliente final','error');return false;}
     costo=getTarifa(db,tienda.ciudad,ciudad);
   }
   var dirRetiroFinal=(isGoogleMapsUrl(tienda.urlMaps)?String(tienda.urlMaps).trim():(tienda.direccion||''));
   if(esDev&&pickUrl)dirRetiroFinal=pickUrl;
+  if(esDev){cliente=currentUser.name||'';telefono=currentUser.telefono||'';}
   var num=String(db.nextPedidoNum).padStart(3,'0');
   var p={id:'P-'+num,fecha:hoyLocal(),tiendaId:tiendaId,tienda:tienda.nombre,telefonoTienda:tienda.telefono,urlMapsTienda:tienda.urlMaps||'',cliente:cliente,telefono:telefono,clienteEmail:currentUser.id,dirRetiro:dirRetiroFinal,ciudadOrigen:ciudadOrigenFinal,ciudad:ciudad,dirEntrega:normalizeMapsUrl(dirEntrega),monto:monto,costo:costo,metodo:metodo,devolucion:esDev,hora:new Date().toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'}),ventana:ventana,deliveryId:'',delivery:'',ruteadorId:'',estado:'Pendiente',verificado:false,horaEntrega:'',obs:obs,motivo:'',montoCobrado:0,ordenEntrega:0,retirado:false,horaRetiro:'',horaInicioRuta:'',entregadoTs:0,estadoPago:'',comprobante:'',comprobanteNombre:'',comprobanteTs:0,cuentaDestino:'',pagoA:'',pagoATs:0,rendDeliveryCero:false,rendTiendaCero:false,comprobanteVerificado:false,notificadoTienda:false,fechaReagendado:'',capturaReagendado:'',reagendadoPor:'',metodoSolicitado:'',cambioMetodoTs:0,cambioMetodoNota:''};
   db.pedidos.push(p);db.nextPedidoNum++;saveDB(db);opUpsert('Pedidos',p.id,p);
@@ -3994,7 +3991,7 @@ var _tipoPedidoCliente='pedido';
 function setTipoPedidoCliente(t){
   _tipoPedidoCliente=(t==='devolucion')?'devolucion':'pedido';
   var dev=_tipoPedidoCliente==='devolucion';
-  var ids=['cTelGroup','cCiudadGroup','cMontoGroup','cMapsGroup','cMetodoGroup','cVentanaGroup'];
+  var ids=['cClienteGroup','cTelGroup','cCiudadGroup','cMontoGroup','cMapsGroup','cMetodoGroup','cVentanaGroup'];
   for(var k=0;k<ids.length;k++){
     var el=document.getElementById(ids[k]);
     if(el)el.classList.toggle('hidden',dev);
@@ -4037,9 +4034,7 @@ function renderClienteDatos(){
   var html='<div style="font-weight:700">🏪 Origen de tus pedidos: '+safeText((u.tienda&&u.tienda.nombre)||currentUser.name)+'</div>'
     +'<div>🏙️ Ciudad: '+safeText(u.ciudad||'—')+'</div>'
     +(u.direccion?'<div>📍 '+safeText(u.direccion)+'</div>':'')
-    +(wa?'<div><a href="'+wa+'" target="_blank" rel="noopener">🔗 Ver en Google Maps</a></div>':'')
-    +'<div style="margin-top:6px;font-weight:700">👤 Cliente final: '+safeText(currentUser.name)+'</div>'
-    +'<div>📞 '+safeText(currentUser.telefono||'—')+'</div>';
+    +(wa?'<div><a href="'+wa+'" target="_blank" rel="noopener">🔗 Ver en Google Maps</a></div>':'');
   box.innerHTML=html;
 }
 
