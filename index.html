@@ -808,7 +808,8 @@ body.sidebar-collapsed .main-content{margin-left:0}
 <button type="button" id="cTipoPedido" class="btn btn-primary" style="flex:1" onclick="setTipoPedidoCliente('pedido')">&#128230; Pedido</button>
 <button type="button" id="cTipoDevolucion" class="btn btn-secondary" style="flex:1" onclick="setTipoPedidoCliente('devolucion')">&#8617; Devoluci&#243;n</button>
 </div>
-<div class="alert-info" id="cDevInfo" style="display:none;margin-bottom:12px">&#8617; <b>Devoluci&#243;n:</b> solo complet&#225;s la <b>tienda</b> a la que devolv&#233;s. El costo de env&#237;o es <b>Gs. 0</b>.</div>
+<div class="alert-info" id="cDevInfo" style="display:none;margin-bottom:12px">&#8617; <b>Devoluci&#243;n:</b> eleg&#237; de tu lista un pedido <b>pendiente, cancelado o reagendado</b> y toc&#225; <b>Solicitar devoluci&#243;n</b>. El costo de env&#237;o es <b>Gs. 0</b>.</div>
+<div id="cDevList" style="display:none;margin-bottom:12px"></div>
 <form id="formClientePedido" onsubmit="return savePedidoCliente(event)">
 <div class="form-grid">
 <div class="form-group full-width" id="cTiendaGroup"><label id="cTiendaLabel">Tienda *</label><select id="cTienda" onchange="onClienteTiendaSeleccionada()"><option value="">Seleccionar...</option></select></div>
@@ -3449,6 +3450,7 @@ function renderClientApp(){
   }
   /* Se reaplica la pestaña actual: un refresh por sincronización no debe
      botar al cliente fuera de la Rendición si estaba ahí. */
+  if(_tipoPedidoCliente==='devolucion')renderDevolucionesCliente();
   clientTab(_clientTab);
 }function savePedidoCliente(e){
   if(e)e.preventDefault();
@@ -3787,6 +3789,65 @@ function solicitarDevolucionTienda(pedidoId){
   renderTiendaApp();
   return false;
 }
+function renderDevolucionesCliente(){
+  var el=document.getElementById('cDevList');
+  if(!el)return;
+  if(!currentUser)return;
+  var db=getDB();
+  var mis=(db.pedidos||[]).filter(function(p){return p.clienteEmail===currentUser.id||p.telefono===currentUser.telefono;});
+  var estados=['Pendiente','Cancelado','Reagendado'];
+  var enCurso=mis.filter(function(p){return p.devolucion&&p.devolucionDe&&['Entregado','Cancelado'].indexOf(p.estado)<0;});
+  var porDevolver=mis.filter(function(p){
+    if(p.devolucion||estados.indexOf(p.estado)<0)return false;
+    return !mis.some(function(q){return q.devolucion&&q.devolucionDe===p.id&&q.estado!=='Cancelado';});
+  });
+  var h='';
+  if(enCurso.length){
+    h+='<div style="font-weight:700;margin:4px 0 8px">\u{21A9} Devoluciones en camino ('+enCurso.length+'):</div>';
+    h+=enCurso.map(function(p){
+      var _urlE=getMapsUrlEntrega(p);
+      var _mark=p.retirado?' <span class="badge" style="background:#2980b9;color:#fff">\u{1F4E6} Retirado</span>':'';
+      return '<div class="delivery-card" style="margin-bottom:10px"><div class="dc-id">'+p.id+' '+badgeEstado(p.estado)+(p.devolucionDe?' <span class="badge" style="background:#8e44ad;color:#fff">\u{21A9} Dev. de '+safeText(p.devolucionDe)+'</span>':'')+_mark+'</div>'
+        +(p.delivery?'<div>\u{1F3CD}\u{FE0F} Delivery: '+safeText(p.delivery)+'</div>':'')
+        +(_urlE?'<div style="margin-top:6px"><a href="'+_urlE+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs">\u{1F5FA}\u{FE0F} Maps entrega</a></div>':'')
+        +(p.obs?'<div style="margin-top:4px;font-size:.8rem;color:var(--gray-600)">'+safeText(p.obs)+'</div>':'')
+        +'</div>';
+    }).join('');
+  }
+  if(porDevolver.length){
+    h+='<div style="font-weight:700;margin:12px 0 8px">\u{1F4CB} Tus pedidos para devolver:</div>';
+    h+=porDevolver.map(function(p){
+      return '<div class="delivery-card" style="margin-bottom:10px"><div class="dc-id">'+p.id+' '+badgeEstado(p.estado)+'</div>'
+        +'<div>\u{1F464} '+safeText(p.cliente)+' \u00B7 \u{1F4CD} '+safeText(p.ciudad)+'</div>'
+        +'<div>\u{1F4B0} '+formatGs(p.monto)+' \u00B7 '+safeText(p.metodo)+'</div>'
+        +(p.motivo?'<div style="color:var(--danger);font-weight:600">\u{1F4DD} '+safeText(p.motivo)+'</div>':'')
+        +'<button class="btn btn-primary btn-sm" style="width:100%;margin-top:8px" onclick="solicitarDevolucionCliente(\''+p.id+'\')">\u{1F4E9} Solicitar devoluci\u00F3n</button>'
+        +'</div>';
+    }).join('');
+  }
+  if(!h)h='<div class="empty-state"><p>\u2705 No ten\u00E9s pedidos pendientes, cancelados o reagendados para devolver</p></div>';
+  el.innerHTML=h;
+}
+function solicitarDevolucionCliente(pedidoId){
+  var db=getDB();
+  var orig=db.pedidos.find(function(x){return x.id===pedidoId;});
+  if(!orig){showToast('No se encontr\u00F3 el pedido','error');return;}
+  var tienda=tiendaDeClienteActual();
+  if(!tienda){showToast('\u{26A0}\u{FE0F} Tu usuario no tiene tienda asociada. Contact\u00E1 a Administraci\u00F3n.','error');return;}
+  if(['Pendiente','Cancelado','Reagendado'].indexOf(orig.estado)<0){showToast('El pedido '+orig.id+' ('+orig.estado+') no se puede devolver. Solo pedidos pendientes, cancelados o reagendados.','error');return;}
+  var ya=db.pedidos.some(function(q){return q.devolucion&&q.devolucionDe===orig.id&&q.estado!=='Cancelado';});
+  if(ya){showToast('Ya solicitaste la devoluci\u00F3n de '+orig.id,'error');return;}
+  var num=String(db.nextPedidoNum).padStart(3,'0');
+  var dev={id:'P-'+num,fecha:hoyLocal(),tiendaId:tienda.id,tienda:tienda.nombre,telefonoTienda:tienda.telefono,urlMapsTienda:'',cliente:tienda.nombre,telefono:tienda.telefono||'',clienteEmail:currentUser.id,dirRetiro:'Base JAGI Y ZOE (oficina)',ciudadOrigen:tienda.ciudad||orig.ciudadOrigen||'',ciudad:tienda.ciudad||'',dirEntrega:isGoogleMapsUrl(tienda.urlMaps)?normalizeMapsUrl(tienda.urlMaps):'',monto:0,costo:0,metodo:'Solo Entrega',devolucion:true,devolucionDe:orig.id,hora:new Date().toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'}),ventana:'Todo el d\u00EDa',deliveryId:'',delivery:'',ruteadorId:'',estado:'Pendiente',verificado:false,horaEntrega:'',obs:'\u{21A9} Devoluci\u00F3n del pedido '+orig.id+' ('+safeText(orig.cliente)+'): retirar en la base y entregar en esta tienda',motivo:'',montoCobrado:0,ordenEntrega:0,retirado:false,horaRetiro:'',horaInicioRuta:'',entregadoTs:0,estadoPago:'',comprobante:'',comprobanteNombre:'',comprobanteTs:0,cuentaDestino:'',pagoA:'',pagoATs:0,rendDeliveryCero:false,rendTiendaCero:false,comprobanteVerificado:false,notificadoTienda:false,fechaReagendado:'',capturaReagendado:'',reagendadoPor:'',metodoSolicitado:'',cambioMetodoTs:0,cambioMetodoNota:''};
+  db.pedidos.push(dev);db.nextPedidoNum++;saveDB(db);opUpsert('Pedidos',dev.id,dev);
+  addNotification('devolucion_solicitada',dev);
+  registrarLog('devolucion_solicitada',dev.id,{pedidoOriginal:orig.id});
+  publicarBeacon();
+  showToast('\u{21A9} Devoluci\u00F3n '+dev.id+' enviada a la ruteadora (pedido '+orig.id+')','success');
+  renderDevolucionesCliente();
+  renderClientApp();
+  return false;
+}
 function renderTiendaApp(){if(!currentUser||!esRolTienda(currentUser.role))return;var db=getDB();document.getElementById('tiendaWelcome').textContent='Hola, '+currentUser.name+' · '+hoyLocal();var mis=pedidosDeTiendaActual().sort(function(a,b){return b.id.localeCompare(a.id);});document.getElementById('tStatTotal').textContent=mis.length;document.getElementById('tStatEntr').textContent=mis.filter(function(p){return p.estado==='Entregado';}).length;document.getElementById('tStatPend').textContent=mis.filter(function(p){return !['Entregado','Cancelado'].includes(p.estado);}).length;
 renderTiendaTarifas();document.getElementById('tiendaPedidosList').innerHTML=mis.length?mis.map(function(p){var _urlR=getMapsUrlRetiro(p),_urlE=getMapsUrlEntrega(p);var _links='';if(_urlR)_links+='<a href="'+_urlR+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs">🗺️ Google Maps Retiro</a> ';if(_urlE)_links+='<a href="'+_urlE+'" target="_blank" rel="noopener" class="btn btn-maps btn-xs">🗺️ Google Maps Entrega</a>';return '<div class="delivery-card" style="margin-bottom:10px"><div class="dc-id">'+p.id+' '+badgeEstado(p.estado)+(p.devolucion?' <span class="badge" style="background:#8e44ad;color:#fff">\u{21A9} Devoluci\u00F3n</span>':'')+'</div><div>👤 '+safeText(p.cliente)+' · 📍 '+safeText(p.ciudad)+'</div><div>💰 '+formatGs(p.monto)+' · '+safeText(p.metodo)+(esPagoDelCliente(p.metodo)?' \u{1F381} El cliente pag\u00F3 a <strong>'+(p.pagoA==='tienda'?'la TIENDA':'NOSOTROS')+'</strong> \u{1F44D} te corresponde <strong>'+formatGs(montoRendTienda(p))+'</strong>':'')+'</div><div>⏰ Rango horario: <strong>'+(p.ventana?safeText(p.ventana):'Todo el día')+'</strong></div>'+(_links?'<div style="margin-top:6px">'+_links+'</div>':'')+(p.motivo?'<div style="color:var(--danger);font-weight:600">📝 '+safeText(p.motivo)+'</div>':'')+(p.dijoCliente?'<div style="color:var(--danger);font-style:italic;padding-left:10px;border-left:3px solid #e74c3c">🗣️ “'+safeText(p.dijoCliente)+'”</div>':'')+'</div>';}).join(''):'<div class="empty-state"><p>Sin pedidos aún.</p></div>';
 var notifs=(db.notifications||[]).filter(function(n){var p=db.pedidos.find(function(x){return x.id===n.pedidoId;});return p&&mis.some(function(m){return m.id===p.id;});}).slice(0,30);
@@ -3996,17 +4057,22 @@ function setTipoPedidoCliente(t){
     var el=document.getElementById(ids[k]);
     if(el)el.classList.toggle('hidden',dev);
   }
+  var tg=document.getElementById('cTiendaGroup');
+  if(tg)tg.classList.toggle('hidden',dev||!!tiendaDeClienteActual());
   var obs=document.getElementById('cObsGroup');
-  if(obs)obs.classList.remove('hidden');
+  if(obs)obs.classList.toggle('hidden',dev);
   var info=document.getElementById('cDevInfo');
   if(info)info.style.display=dev?'':'none';
   var b1=document.getElementById('cTipoPedido'),b2=document.getElementById('cTipoDevolucion');
   if(b1)b1.className='btn '+(dev?'btn-secondary':'btn-primary');
   if(b2)b2.className='btn '+(dev?'btn-primary':'btn-secondary');
   var tl=document.getElementById('cTiendaLabel');
-  if(tl)tl.textContent=dev?'Tienda (a la que devolv\u00E9s) *':'Tienda *';
+  if(tl)tl.textContent='Tienda *';
   var sub=document.getElementById('cEnviarBtn');
-  if(sub)sub.textContent=dev?'\u{21A9} Enviar Devoluci\u00F3n':'\u{1F4E4} Enviar Pedido';
+  if(sub){sub.style.display=dev?'none':'';sub.textContent='\u{1F4E4} Enviar Pedido';}
+  var lista=document.getElementById('cDevList');
+  if(lista)lista.style.display=dev?'':'none';
+  if(dev)renderDevolucionesCliente();
 }
 var _clientTab='pedidos';
 function clientTab(which){
